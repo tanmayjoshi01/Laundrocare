@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore, Order } from '../store';
 import { Button, StatusBadge, WhatsAppButton } from '../components/ui';
-import { Search, Calendar } from 'lucide-react';
+import { Search, Calendar, Link2, Copy } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { OrderBillModal } from '../components/OrderBillModal';
 import { getWhatsAppBillUrl } from '../components/whatsapp-bill';
@@ -170,6 +170,15 @@ export default function OrdersPage() {
                       )}
                       {!o.paid && (
                         <Button variant="secondary" size="sm" onClick={() => markPaid(o.id)}>💳 Mark Paid</Button>
+                      )}
+                      {o.paymentLink && !o.paid && (
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(o.paymentLink!); showToast('📋 Payment link copied!'); }}
+                          className="h-10 px-3 rounded-[8px] bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] flex items-center gap-1.5 hover:bg-[#DBEAFE] cursor-pointer font-['DM_Sans'] text-[13px]"
+                          style={{ fontWeight: 500 }}
+                        >
+                          <Link2 size={14} /> Copy Link
+                        </button>
                       )}
                       <a href={getWhatsAppBillUrl(o, laundryServices, getCustomerCategory(o.customerId) || undefined)} target="_blank" rel="noopener noreferrer" className="h-10 w-10 rounded-[8px] bg-[#25D366] text-white flex items-center justify-center hover:bg-[#1ebe57] cursor-pointer">📱</a>
                     </div>

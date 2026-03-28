@@ -1,7 +1,8 @@
 import { useStore, Order } from '../store';
-import { X, Printer, MessageCircle } from 'lucide-react';
+import { X, Printer, MessageCircle, Download, ExternalLink } from 'lucide-react';
 import { Button, StatusBadge } from './ui';
 import { getWhatsAppBillUrl } from './whatsapp-bill';
+import { downloadBillPdf } from './BillPdf';
 
 interface OrderBillModalProps {
   order: Order;
@@ -14,6 +15,10 @@ export function OrderBillModal({ order, onClose }: OrderBillModalProps) {
   const totalPcs = order.items.reduce((s, i) => s + i.qty, 0);
   const cat = getCustomerCategory(order.customerId);
   const whatsappUrl = getWhatsAppBillUrl(order, laundryServices, cat || undefined);
+
+  const handleDownloadPdf = async () => {
+    await downloadBillPdf(order, laundryServices, cat || undefined);
+  };
 
   const printReceipt = () => {
     const now = new Date();
@@ -179,8 +184,28 @@ export function OrderBillModal({ order, onClose }: OrderBillModalProps) {
             </div>
           </div>
 
+          {/* Payment Link */}
+          {order.paymentLink && !order.paid && (
+            <div className="p-3 rounded-[8px] bg-[#EFF6FF] border border-[#BFDBFE] mb-5">
+              <div className="font-['DM_Sans'] text-[13px] text-[#2563EB] mb-1.5" style={{ fontWeight: 600 }}>💳 Payment Link</div>
+              <div className="flex items-center gap-2">
+                <input readOnly value={order.paymentLink} className="flex-1 h-[34px] px-2 rounded-[4px] border border-[#BFDBFE] bg-white font-['JetBrains_Mono'] text-[11px] text-[#2563EB]" />
+                <a href={order.paymentLink} target="_blank" rel="noopener noreferrer" className="h-[34px] w-[34px] rounded-[4px] bg-[#2563EB] text-white flex items-center justify-center hover:bg-[#1d4ed8] cursor-pointer">
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3">
+            <button
+              onClick={handleDownloadPdf}
+              className="flex-1 h-[52px] rounded-[8px] bg-[#7C3AED] text-white font-['DM_Sans'] flex items-center justify-center gap-2 hover:bg-[#6D28D9] cursor-pointer transition-colors"
+              style={{ fontWeight: 600 }}
+            >
+              <Download size={18} /> PDF
+            </button>
             <button
               onClick={printReceipt}
               className="flex-1 h-[52px] rounded-[8px] bg-[#F1F5F9] text-[#0F172A] font-['DM_Sans'] flex items-center justify-center gap-2 hover:bg-[#E2E8F0] cursor-pointer transition-colors"

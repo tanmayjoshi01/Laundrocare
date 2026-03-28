@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useStore, Order } from '../store';
-import { Button, WhatsAppButton } from '../components/ui';
-import { Printer, Check } from 'lucide-react';
+import { Button } from '../components/ui';
+import { Printer, Check, Download, ExternalLink } from 'lucide-react';
+import { getWhatsAppOrderCreatedUrl } from '../components/whatsapp-bill';
+import { downloadBillPdf } from '../components/BillPdf';
 
 export default function BillingPage() {
-  const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, setOrders, nextOrderId, showToast, laundryServices, customerCategories, saveOrder } = useStore();
+  const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, setOrders, nextOrderId, showToast, laundryServices, customerCategories, saveOrder, createPaymentLink, getCustomerCategory } = useStore();
   const SERVICE_LABELS: Record<string, string> = Object.fromEntries(laundryServices.map(s => [s.key, s.label]));
   const navigate = useNavigate();
   const [discount, setDiscount] = useState(0);
@@ -13,7 +15,13 @@ export default function BillingPage() {
   const [paid, setPaid] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [orderId, setOrderId] = useState('');
-  const [dueDate, setDueDate] = useState('2026-03-30');
+  const [dueDate, setDueDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 2);
+    return d.toLocaleDateString('en-CA');
+  });
+  const [paymentLink, setPaymentLink] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     nextOrderId().then(setOrderId);
@@ -30,8 +38,6 @@ export default function BillingPage() {
   const discountAmt = categoryDiscountAmt + manualDiscountAmt;
   const total = Math.max(0, subtotal - discountAmt);
   const totalPcs = currentOrderItems.reduce((s, i) => s + i.qty, 0);
-
-  const whatsappMsg = `LaundroCare 🧺\n\nHi ${selectedCustomer?.name || ''},\nYour order #${orderId} has been registered.\n\nItems: ${totalPcs} pcs\nTotal: ₹${total}\nDue Date: ${dueDate}\n\nThank you for choosing LaundroCare!`;
 
   const confirmOrder = async () => {
     const order: Order = {
@@ -50,14 +56,45 @@ export default function BillingPage() {
     };
     await saveOrder(order);
     setOrders(prev => [order, ...prev]);
+    setConfirmedOrder(order);
     setConfirmed(true);
     showToast('✅ Order saved successfully!');
+
+    // Generate payment link if not paid
+    if (!paid) {
+      setGeneratingLink(true);
+      try {
+        const link = await createPaymentLink(order);
+        if (link) {
+          setPaymentLink(link);
+          order.paymentLink = link;
+          setConfirmedOrder({ ...order, paymentLink: link });
+        }
+      } catch (e) {
+        console.error('Payment link generation failed:', e);
+      }
+      setGeneratingLink(false);
+    }
+
+    // Auto-open WhatsApp with order details
+    const cat = selectedCustomer?.categoryId ? customerCategories.find(c => c.id === selectedCustomer.categoryId) : undefined;
+    const whatsappUrl = getWhatsAppOrderCreatedUrl(order, laundryServices, cat || undefined);
+    setTimeout(() => {
+      window.open(whatsappUrl, '_blank');
+    }, 800);
   };
 
   const handleDone = () => {
     setCurrentOrderItems([]);
     setSelectedCustomer(null);
     navigate('/orders');
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!confirmedOrder) return;
+    const cat = getCustomerCategory(confirmedOrder.customerId);
+    await downloadBillPdf(confirmedOrder, laundryServices, cat || undefined);
+    showToast('📄 PDF downloaded!');
   };
 
   const printReceipt = () => {
@@ -72,6 +109,12 @@ export default function BillingPage() {
         <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px">₹${i.unitPrice * i.qty}</td>
       </tr>`
     ).join('');
+
+    const paymentLinkHtml = paymentLink && !paid
+      ? `<div style="margin-top:12px;text-align:center;padding:10px;border-radius:8px;background:#EFF6FF;border:1px solid #BFDBFE">
+          <div style="font-size:12px;color:#2563EB;font-weight:600;margin-bottom:4px">💳 Pay Online</div>
+          <a href="${paymentLink}" style="font-size:11px;color:#2563EB;word-break:break-all">${paymentLink}</a>
+        </div>` : '';
 
     const html = `<!DOCTYPE html><html><head><title>Receipt #${orderId}</title>
       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700&family=DM+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -112,6 +155,7 @@ export default function BillingPage() {
         <div style="margin-top:12px;text-align:center;padding:8px;border-radius:6px;font-size:14px;font-weight:600;${paid ? 'background:#DCFCE7;color:#166534' : 'background:#FEF2F2;color:#991B1B'}">
           ${paid ? '✅ PAID' : '⏳ UNPAID'}
         </div>
+        ${paymentLinkHtml}
         <div style="margin-top:16px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px dashed #E2E8F0;padding-top:12px">
           Printed: ${timestamp}<br>Thank you for choosing LaundroCare!
         </div>
@@ -205,10 +249,47 @@ export default function BillingPage() {
               <div className="text-center p-4 bg-[#DCFCE7] rounded-[8px] font-['DM_Sans'] text-[#166534] text-[15px]" style={{ fontWeight: 600 }}>
                 ✅ Order #{orderId} confirmed!
               </div>
-              <WhatsAppButton message={whatsappMsg} phone={selectedCustomer?.phone ? `91${selectedCustomer.phone}` : ''} className="w-full" />
+
+              {/* WhatsApp sent automatically notification */}
+              <div className="text-center p-3 bg-[#F0FDF4] rounded-[8px] border border-[#BBF7D0]">
+                <span className="font-['DM_Sans'] text-[13px] text-[#16A34A]" style={{ fontWeight: 500 }}>📱 WhatsApp bill sent automatically to {selectedCustomer?.name}</span>
+              </div>
+
+              {/* Payment Link */}
+              {!paid && (
+                <div className="p-4 rounded-[10px] bg-[#EFF6FF] border border-[#BFDBFE]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-['DM_Sans'] text-[14px] text-[#2563EB]" style={{ fontWeight: 600 }}>💳 Payment Link</span>
+                    {generatingLink && <span className="font-['DM_Sans'] text-[12px] text-[#64748B]">Generating...</span>}
+                  </div>
+                  {paymentLink ? (
+                    <div className="flex items-center gap-2">
+                      <input readOnly value={paymentLink} className="flex-1 h-[40px] px-3 rounded-[6px] border border-[#BFDBFE] bg-white font-['JetBrains_Mono'] text-[12px] text-[#2563EB]" />
+                      <button onClick={() => { navigator.clipboard.writeText(paymentLink); showToast('📋 Link copied!'); }} className="h-[40px] px-4 rounded-[6px] bg-[#2563EB] text-white font-['DM_Sans'] text-[13px] cursor-pointer hover:bg-[#1d4ed8]">Copy</button>
+                      <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="h-[40px] w-[40px] rounded-[6px] border border-[#BFDBFE] flex items-center justify-center hover:bg-[#DBEAFE] cursor-pointer">
+                        <ExternalLink size={16} className="text-[#2563EB]" />
+                      </a>
+                    </div>
+                  ) : !generatingLink ? (
+                    <p className="font-['DM_Sans'] text-[12px] text-[#64748B]">Payment link will be available once Razorpay is configured. Share the bill via WhatsApp or PDF for now.</p>
+                  ) : null}
+                </div>
+              )}
+
+              {/* PDF Download */}
+              <button
+                onClick={handleDownloadPdf}
+                className="w-full h-[52px] rounded-[8px] bg-[#7C3AED] text-white font-['DM_Sans'] flex items-center justify-center gap-2 hover:bg-[#6D28D9] cursor-pointer transition-colors"
+                style={{ fontWeight: 600 }}
+              >
+                <Download size={20} /> Download PDF Bill
+              </button>
+
+              {/* Print Receipt */}
               <button onClick={printReceipt} className="w-full h-[52px] rounded-[8px] bg-[#F1F5F9] text-[#64748B] font-['DM_Sans'] flex items-center justify-center gap-2 hover:bg-[#E2E8F0] cursor-pointer">
                 <Printer size={20} /> Print Receipt
               </button>
+
               <Button variant="primary" size="md" className="w-full" onClick={handleDone}>
                 Done — Go to Orders
               </Button>

@@ -20,7 +20,8 @@ export interface Order {
   id: string; customerId: string; customerName: string; customerPhone: string;
   items: OrderItem[]; subtotal: number; discount: number; total: number;
   status: 'pending' | 'completed'; paid: boolean;
-  paymentMethod?: 'cash' | 'upi' | ''; createdAt: string; dueDate: string;
+  paymentMethod?: 'cash' | 'upi' | 'online' | ''; createdAt: string; dueDate: string;
+  paymentLink?: string; paymentLinkId?: string;
 }
 export interface LaundryItem { id: string; name: string; }
 export interface LaundryService { id: string; key: string; label: string; }
@@ -38,6 +39,9 @@ interface StoreContextType {
   loading: boolean;
   currentOrderItems: OrderItem[];
   selectedCustomer: Customer | null;
+  ownerPhone: string;
+  dailySummaryEnabled: boolean;
+  monthlySummaryEnabled: boolean;
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
   setLaundryItems: React.Dispatch<React.SetStateAction<LaundryItem[]>>;
@@ -66,6 +70,9 @@ interface StoreContextType {
   deleteLaundryService: (id: string, key: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  createPaymentLink: (order: Order) => Promise<string | null>;
+  saveOwnerSettings: (phone: string, daily: boolean, monthly: boolean) => Promise<void>;
+  generateDailySummary: () => { todayOrders: number; todayEarnings: number; paidAmount: number; unpaidAmount: number; pending: number; completed: number };
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -83,6 +90,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [toastMessage, setToastMessage] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
+  const [dailySummaryEnabled, setDailySummaryEnabled] = useState(true);
+  const [monthlySummaryEnabled, setMonthlySummaryEnabled] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -130,7 +140,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (ordersData && orderItemsData) {
         setOrders(ordersData.map(o => mapOrder(o, orderItemsData.filter(i => i.order_id === o.id))));
       }
-      if (settings) setShopOpenState(settings.shop_open);
+      if (settings) {
+        setShopOpenState(settings.shop_open);
+        if (settings.owner_phone) setOwnerPhone(settings.owner_phone);
+        if (settings.daily_summary_enabled !== undefined) setDailySummaryEnabled(settings.daily_summary_enabled);
+        if (settings.monthly_summary_enabled !== undefined) setMonthlySummaryEnabled(settings.monthly_summary_enabled);
+      }
     } catch (err) {
       console.error('Error loading data:', err);
     } finally {
@@ -178,6 +193,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       status: order.status, paid: order.paid,
       payment_method: order.paymentMethod || '',
       created_at: order.createdAt, due_date: order.dueDate,
+      payment_link: order.paymentLink || null,
+      payment_link_id: order.paymentLinkId || null,
     });
     await supabase.from('order_items').insert(
       order.items.map(i => ({
@@ -193,6 +210,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (updates.status !== undefined) row.status = updates.status;
     if (updates.paid !== undefined) row.paid = updates.paid;
     if (updates.paymentMethod !== undefined) row.payment_method = updates.paymentMethod;
+    if (updates.paymentLink !== undefined) row.payment_link = updates.paymentLink;
+    if (updates.paymentLinkId !== undefined) row.payment_link_id = updates.paymentLinkId;
     await supabase.from('orders').update(row).eq('id', id);
     setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
   };
@@ -251,6 +270,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return customerCategories.find(cat => cat.id === customer.categoryId);
   };
 
+  const createPaymentLink = async (order: Order): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment-link', {
+        body: {
+          orderId: order.id,
+          amount: order.total * 100, // paise
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          description: `LaundroCare Order #${order.id}`,
+        },
+      });
+      if (error || !data?.short_url) {
+        console.error('Payment link error:', error || data);
+        return null;
+      }
+      // Update order with payment link
+      await updateOrder(order.id, { paymentLink: data.short_url, paymentLinkId: data.id });
+      return data.short_url;
+    } catch (err) {
+      console.error('Payment link creation failed:', err);
+      return null;
+    }
+  };
+
+  const saveOwnerSettings = async (phone: string, daily: boolean, monthly: boolean) => {
+    setOwnerPhone(phone);
+    setDailySummaryEnabled(daily);
+    setMonthlySummaryEnabled(monthly);
+    await supabase.from('shop_settings').update({
+      owner_phone: phone,
+      daily_summary_enabled: daily,
+      monthly_summary_enabled: monthly,
+    }).eq('id', 1);
+  };
+
+  const generateDailySummary = () => {
+    const today = new Date().toLocaleDateString('en-CA');
+    const todayOrders = orders.filter(o => o.createdAt === today);
+    return {
+      todayOrders: todayOrders.length,
+      todayEarnings: todayOrders.reduce((s, o) => s + o.total, 0),
+      paidAmount: todayOrders.filter(o => o.paid).reduce((s, o) => s + o.total, 0),
+      unpaidAmount: todayOrders.filter(o => !o.paid).reduce((s, o) => s + o.total, 0),
+      pending: todayOrders.filter(o => o.status === 'pending').length,
+      completed: todayOrders.filter(o => o.status === 'completed').length,
+    };
+  };
+
   return (
     <StoreContext.Provider value={{
       customers, setCustomers, orders, setOrders,
@@ -259,13 +326,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       shopOpen, setShopOpen, isLoggedIn, setIsLoggedIn, loading,
       currentOrderItems, setCurrentOrderItems,
       selectedCustomer, setSelectedCustomer,
+      ownerPhone, dailySummaryEnabled, monthlySummaryEnabled,
       nextOrderId, toastMessage, showToast,
       getPricing, getCustomerDues, getCustomerCategory,
       saveCustomer, saveOrder, updateOrder, savePricing,
       saveCategory, deleteCategory,
       saveLaundryItem, deleteLaundryItem,
       saveLaundryService, deleteLaundryService,
-      signIn, signOut,
+      signIn, signOut, createPaymentLink, saveOwnerSettings, generateDailySummary,
     }}>
       {children}
     </StoreContext.Provider>

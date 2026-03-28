@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useStore, LaundryItem, LaundryService } from '../store';
 import { Button } from '../components/ui';
-import { Plus, Trash2, Edit, Check, X, Search, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Edit, Check, X, Search, ArrowLeft, ChevronDown, ChevronUp, Bell, Phone, Send } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { getWhatsAppDailySummaryUrl } from '../components/whatsapp-bill';
 
 export default function SettingsPage() {
   const {
@@ -14,9 +15,11 @@ export default function SettingsPage() {
     saveLaundryItem, deleteLaundryItem,
     saveLaundryService, deleteLaundryService,
     savePricing,
+    ownerPhone, dailySummaryEnabled, monthlySummaryEnabled,
+    saveOwnerSettings, generateDailySummary,
   } = useStore();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'pricing' | 'categories'>(() => {
+  const [tab, setTab] = useState<'pricing' | 'categories' | 'notifications'>(() => {
     const params = new URLSearchParams(window.location.search);
     return (params.get('tab') as any) || 'pricing';
   });
@@ -42,6 +45,12 @@ export default function SettingsPage() {
   const [editCatName, setEditCatName] = useState('');
   const [editCatDiscount, setEditCatDiscount] = useState(0);
   const [editCatColor, setEditCatColor] = useState('');
+
+  // Notification settings local state
+  const [localOwnerPhone, setLocalOwnerPhone] = useState(ownerPhone);
+  const [localDailyEnabled, setLocalDailyEnabled] = useState(dailySummaryEnabled);
+  const [localMonthlyEnabled, setLocalMonthlyEnabled] = useState(monthlySummaryEnabled);
+  const [savingNotif, setSavingNotif] = useState(false);
 
   const addItem = async () => {
     if (!newItemName.trim()) return;
@@ -174,14 +183,14 @@ export default function SettingsPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
-        {(['pricing', 'categories'] as const).map(t => (
+        {(['pricing', 'categories', 'notifications'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`h-[52px] px-6 rounded-[8px] font-['DM_Sans'] text-[15px] cursor-pointer transition-all ${tab === t ? 'bg-[#2563EB] text-white' : 'bg-white border border-[#E2E8F0] text-[#64748B] hover:border-[#94A3B8]'}`}
             style={{ fontWeight: tab === t ? 600 : 400 }}
           >
-            {t === 'pricing' ? 'Items, Services & Pricing' : 'Customer Categories'}
+            {t === 'pricing' ? 'Items, Services & Pricing' : t === 'categories' ? 'Customer Categories' : '🔔 Notifications'}
           </button>
         ))}
       </div>
@@ -371,6 +380,129 @@ export default function SettingsPage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+      {/* Notifications Tab */}
+      {tab === 'notifications' && (
+        <div className="space-y-6">
+          {/* Owner Phone */}
+          <div className="bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)] p-6">
+            <h2 className="font-['Plus_Jakarta_Sans'] text-[18px] text-[#0F172A] mb-2" style={{ fontWeight: 700 }}>Owner WhatsApp Number</h2>
+            <p className="font-['DM_Sans'] text-[14px] text-[#64748B] mb-5">Daily and monthly earnings reports will be sent to this number.</p>
+
+            <div className="flex gap-3 mb-4">
+              <div className="relative flex-1">
+                <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+                <input
+                  value={localOwnerPhone}
+                  onChange={e => setLocalOwnerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="Enter 10-digit mobile number"
+                  type="tel"
+                  className="w-full h-[56px] pl-12 pr-4 rounded-[10px] border-2 border-[#E2E8F0] bg-[#F8FAFC] font-['JetBrains_Mono'] text-[18px] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Summary Toggles */}
+          <div className="bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)] p-6">
+            <h2 className="font-['Plus_Jakarta_Sans'] text-[18px] text-[#0F172A] mb-4" style={{ fontWeight: 700 }}>Earnings Reports</h2>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0]">
+                <div>
+                  <div className="font-['DM_Sans'] text-[15px] text-[#0F172A]" style={{ fontWeight: 600 }}>📅 Daily Summary</div>
+                  <div className="font-['DM_Sans'] text-[13px] text-[#64748B]">Sent every day at 9:00 PM IST</div>
+                </div>
+                <button
+                  onClick={() => setLocalDailyEnabled(!localDailyEnabled)}
+                  className={`w-[56px] h-[30px] rounded-full relative cursor-pointer transition-colors ${localDailyEnabled ? 'bg-[#16A34A]' : 'bg-[#CBD5E1]'}`}
+                >
+                  <div className={`w-[24px] h-[24px] rounded-full bg-white shadow absolute top-[3px] transition-all ${localDailyEnabled ? 'left-[29px]' : 'left-[3px]'}`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0]">
+                <div>
+                  <div className="font-['DM_Sans'] text-[15px] text-[#0F172A]" style={{ fontWeight: 600 }}>📆 Monthly Summary</div>
+                  <div className="font-['DM_Sans'] text-[13px] text-[#64748B]">Sent on the 1st of each month at 9:00 AM IST</div>
+                </div>
+                <button
+                  onClick={() => setLocalMonthlyEnabled(!localMonthlyEnabled)}
+                  className={`w-[56px] h-[30px] rounded-full relative cursor-pointer transition-colors ${localMonthlyEnabled ? 'bg-[#16A34A]' : 'bg-[#CBD5E1]'}`}
+                >
+                  <div className={`w-[24px] h-[24px] rounded-full bg-white shadow absolute top-[3px] transition-all ${localMonthlyEnabled ? 'left-[29px]' : 'left-[3px]'}`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full"
+                disabled={savingNotif}
+                onClick={async () => {
+                  setSavingNotif(true);
+                  await saveOwnerSettings(localOwnerPhone, localDailyEnabled, localMonthlyEnabled);
+                  setSavingNotif(false);
+                  showToast('✅ Notification settings saved!');
+                }}
+              >
+                <Check size={18} /> {savingNotif ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Send Summary Now */}
+          <div className="bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)] p-6">
+            <h2 className="font-['Plus_Jakarta_Sans'] text-[18px] text-[#0F172A] mb-2" style={{ fontWeight: 700 }}>Send Summary Now</h2>
+            <p className="font-['DM_Sans'] text-[14px] text-[#64748B] mb-5">Instantly send today's earnings summary to the owner's WhatsApp.</p>
+
+            {(() => {
+              const summary = generateDailySummary();
+              const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+              return (
+                <>
+                  {/* Preview Card */}
+                  <div className="p-4 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0] mb-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="font-['DM_Sans'] text-[12px] text-[#94A3B8]">Orders Today</div>
+                        <div className="font-['JetBrains_Mono'] text-[20px] text-[#2563EB]" style={{ fontWeight: 700 }}>{summary.todayOrders}</div>
+                      </div>
+                      <div>
+                        <div className="font-['DM_Sans'] text-[12px] text-[#94A3B8]">Earnings</div>
+                        <div className="font-['JetBrains_Mono'] text-[20px] text-[#16A34A]" style={{ fontWeight: 700 }}>₹{summary.todayEarnings.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="font-['DM_Sans'] text-[12px] text-[#94A3B8]">Collected</div>
+                        <div className="font-['JetBrains_Mono'] text-[16px] text-[#0F172A]">₹{summary.paidAmount.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="font-['DM_Sans'] text-[12px] text-[#94A3B8]">Pending</div>
+                        <div className="font-['JetBrains_Mono'] text-[16px] text-[#DC2626]">₹{summary.unpaidAmount.toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const phone = localOwnerPhone || ownerPhone;
+                      if (!phone) { showToast('⚠️ Please set owner phone number first'); return; }
+                      const url = getWhatsAppDailySummaryUrl(phone, today, summary);
+                      window.open(url, '_blank');
+                      showToast('📊 Opening daily summary in WhatsApp...');
+                    }}
+                    className="w-full h-[52px] rounded-[8px] bg-[#25D366] text-white font-['DM_Sans'] flex items-center justify-center gap-2 hover:bg-[#1ebe57] cursor-pointer transition-colors"
+                    style={{ fontWeight: 600 }}
+                  >
+                    <Send size={18} /> Send Today's Summary via WhatsApp
+                  </button>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

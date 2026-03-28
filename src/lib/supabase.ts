@@ -47,5 +47,7 @@ export function mapOrder(row: any, items: any[]) {
     paymentMethod: row.payment_method || '',
     createdAt: row.created_at,
     dueDate: row.due_date,
+    paymentLink: row.payment_link || undefined,
+    paymentLinkId: row.payment_link_id || undefined,
   };
 }
