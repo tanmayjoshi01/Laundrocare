@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router';
-import { StoreProvider, useStore } from '../store';
+import { useStore } from '../store';
 import { Toast } from './ui';
 
 function ToastWrapper() {
@@ -9,9 +9,9 @@ function ToastWrapper() {
 
 export default function RootLayout() {
   return (
-    <StoreProvider>
+    <>
       <Outlet />
       <ToastWrapper />
-    </StoreProvider>
+    </>
   );
 }

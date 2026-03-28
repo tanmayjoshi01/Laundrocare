@@ -5,10 +5,9 @@ import { Button, StatusBadge } from '../components/ui';
 import { Search, Plus, Minus, X, User, Package, Check } from 'lucide-react';
 
 export default function CreateOrderPage() {
-  const { customers, setCustomers, currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, showToast, laundryItems, laundryServices, getPricing, getCustomerDues } = useStore();
+  const { customers, setCustomers, currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, showToast, laundryItems, laundryServices, getPricing, getCustomerDues, customerCategories } = useStore();
   const navigate = useNavigate();
   const PRICING = getPricing();
-  const ITEM_ICONS: Record<string, string> = Object.fromEntries(laundryItems.map(i => [i.name, i.icon]));
   const SERVICES = laundryServices;
   const [search, setSearch] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -118,7 +117,7 @@ export default function CreateOrderPage() {
               </div>
             </div>
           ) : (
-            <Button variant="success-outline" size="sm" className="w-full" onClick={() => setShowAddForm(true)}>
+            <Button variant="success-outline" size="sm" className="w-full" onClick={() => navigate('/register-customer')}>
               <Plus size={16} /> Add New Customer
             </Button>
           )}
@@ -152,9 +151,7 @@ export default function CreateOrderPage() {
                   onClick={() => { setSelItem(item.name); setSelService(null); }}
                   className={`w-full flex items-center gap-3 p-3 rounded-[10px] border-2 transition-all cursor-pointer text-left ${isActive ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E2E8F0] hover:border-[#94A3B8] bg-white'}`}
                 >
-                  <span className="text-[22px] shrink-0">{item.icon}</span>
                   <div className={`font-['DM_Sans'] text-[15px] flex-1 ${isActive ? 'text-[#2563EB]' : 'text-[#0F172A]'}`} style={{ fontWeight: isActive ? 600 : 400 }}>{item.name}</div>
-                  {isActive && <Check size={18} className="text-[#2563EB] shrink-0" />}
                 </button>
               );
             })}
@@ -186,7 +183,6 @@ export default function CreateOrderPage() {
                       onClick={() => setSelService(s.key)}
                       className={`w-full flex items-center gap-3 p-3 rounded-[10px] border-2 transition-all cursor-pointer text-left ${isActive ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E2E8F0] hover:border-[#94A3B8] bg-white'}`}
                     >
-                      <span className="text-[22px] shrink-0">{s.icon}</span>
                       <div className={`font-['DM_Sans'] text-[15px] flex-1 ${isActive ? 'text-[#2563EB]' : 'text-[#0F172A]'}`} style={{ fontWeight: isActive ? 600 : 400 }}>{s.label}</div>
                       <div className={`font-['JetBrains_Mono'] text-[14px] shrink-0 ${isActive ? 'text-[#2563EB]' : 'text-[#64748B]'}`} style={{ fontWeight: 600 }}>₹{price}</div>
                       {isActive && <Check size={18} className="text-[#2563EB] shrink-0" />}
@@ -217,8 +213,7 @@ export default function CreateOrderPage() {
 
               {/* Live summary strip */}
               <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-[20px]">{ITEM_ICONS[selItem]}</span>
+                <div className="min-w-0">
                   <div>
                     <div className="font-['DM_Sans'] text-[14px] text-[#0F172A]" style={{ fontWeight: 600 }}>
                       {selItem} — {SERVICES.find(s => s.key === selService)?.label}
@@ -256,7 +251,7 @@ export default function CreateOrderPage() {
                 {currentOrderItems.map(i => (
                   <div key={i.id} className="flex items-center justify-between p-3 rounded-[8px] bg-[#F8FAFC] border border-[#E2E8F0]">
                     <div className="flex-1 min-w-0">
-                      <div className="font-['DM_Sans'] text-[14px] text-[#0F172A]">{ITEM_ICONS[i.item]} {i.item}</div>
+                      <div className="font-['DM_Sans'] text-[14px] text-[#0F172A]">{i.item}</div>
                       <div className="text-[12px] text-[#64748B] font-['DM_Sans']">{i.service} × {i.qty}</div>
                     </div>
                     <div className="font-['JetBrains_Mono'] text-[14px] text-[#0F172A] mr-2">₹{i.unitPrice * i.qty}</div>
@@ -265,6 +260,17 @@ export default function CreateOrderPage() {
                 ))}
               </div>
               <div className="border-t border-[#E2E8F0] pt-4">
+                {/* Category discount preview */}
+                {selectedCustomer?.categoryId && (() => {
+                  const cat = customerCategories.find(c => c.id === selectedCustomer.categoryId);
+                  return cat && cat.discount > 0 ? (
+                    <div className="mb-3 px-3 py-2 rounded-[8px] bg-[#F0FDF4] border border-[#BBF7D0]">
+                      <span className="font-['DM_Sans'] text-[13px] text-[#16A34A]" style={{ fontWeight: 600 }}>
+                        {cat.name} — {cat.discount}% discount will apply
+                      </span>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="flex justify-between items-center mb-4">
                   <span className="font-['DM_Sans'] text-[16px] text-[#0F172A]" style={{ fontWeight: 600 }}>Total</span>
                   <span className="font-['JetBrains_Mono'] text-[24px] text-[#0F172A]" style={{ fontWeight: 700 }}>₹{total}</span>

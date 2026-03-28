@@ -5,7 +5,7 @@ import { Button, WhatsAppButton } from '../components/ui';
 import { Printer, Check } from 'lucide-react';
 
 export default function BillingPage() {
-  const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, orders, setOrders, nextOrderId, showToast, laundryServices } = useStore();
+  const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, orders, setOrders, nextOrderId, showToast, laundryServices, customerCategories } = useStore();
   const SERVICE_LABELS: Record<string, string> = Object.fromEntries(laundryServices.map(s => [s.key, s.label]));
   const navigate = useNavigate();
   const [discount, setDiscount] = useState(0);
@@ -16,7 +16,14 @@ export default function BillingPage() {
   const [dueDate, setDueDate] = useState('2026-03-30');
 
   const subtotal = currentOrderItems.reduce((s, i) => s + i.unitPrice * i.qty, 0);
-  const discountAmt = discountType === '%' ? Math.round(subtotal * discount / 100) : discount;
+
+  // Auto category discount
+  const custCategory = selectedCustomer?.categoryId ? customerCategories.find(c => c.id === selectedCustomer.categoryId) : undefined;
+  const categoryDiscount = custCategory?.discount || 0;
+  const categoryDiscountAmt = Math.round(subtotal * categoryDiscount / 100);
+
+  const manualDiscountAmt = discountType === '%' ? Math.round(subtotal * discount / 100) : discount;
+  const discountAmt = categoryDiscountAmt + manualDiscountAmt;
   const total = Math.max(0, subtotal - discountAmt);
   const totalPcs = currentOrderItems.reduce((s, i) => s + i.qty, 0);
 
@@ -154,8 +161,16 @@ export default function BillingPage() {
             <span className="text-[#64748B]">Subtotal</span>
             <span className="font-['JetBrains_Mono'] text-[#0F172A]">₹{subtotal}</span>
           </div>
+          {custCategory && categoryDiscount > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F0FDF4] border border-[#BBF7D0]">
+                <span className="font-['DM_Sans'] text-[13px] text-[#16A34A]" style={{ fontWeight: 600 }}>{custCategory.name} Discount {categoryDiscount}% applied</span>
+              </span>
+              <span className="font-['JetBrains_Mono'] text-[14px] text-[#16A34A]" style={{ fontWeight: 600 }}>-₹{categoryDiscountAmt}</span>
+            </div>
+          )}
           <div className="flex justify-between items-center">
-            <span className="text-[#64748B] font-['DM_Sans'] text-[15px]">Discount</span>
+            <span className="text-[#64748B] font-['DM_Sans'] text-[15px]">Extra Discount</span>
             <div className="flex items-center gap-2">
               <button onClick={() => setDiscountType(discountType === '₹' ? '%' : '₹')} className="w-8 h-8 rounded border border-[#E2E8F0] font-['JetBrains_Mono'] text-[13px] cursor-pointer hover:bg-[#F1F5F9]">{discountType}</button>
               <input type="number" value={discount} onChange={e => setDiscount(Number(e.target.value))} className="w-20 h-8 px-2 rounded border border-[#E2E8F0] font-['JetBrains_Mono'] text-[14px] text-right focus:outline-none focus:ring-2 focus:ring-[#2563EB]" />

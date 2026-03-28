@@ -65,12 +65,11 @@ export default function HomePage() {
           <h2 className="text-[28px] font-['Plus_Jakarta_Sans'] text-[#0F172A] text-center" style={{ fontWeight: 700 }}>What We Do</h2>
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { icon: '🫧', title: 'Washing', desc: 'Deep clean for all fabric types', bg: '#EFF6FF' },
-              { icon: '👔', title: 'Ironing', desc: 'Crisp and wrinkle-free finish', bg: '#F0FDF4' },
-              { icon: '✨', title: 'Dry Cleaning', desc: 'For delicate and premium clothes', bg: '#FFFBEB' },
+              { title: 'Washing', desc: 'Deep clean for all fabric types', bg: '#EFF6FF' },
+              { title: 'Ironing', desc: 'Crisp and wrinkle-free finish', bg: '#F0FDF4' },
+              { title: 'Dry Cleaning', desc: 'For delicate and premium clothes', bg: '#FFFBEB' },
             ].map(s => (
               <div key={s.title} className="rounded-[12px] p-8 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)]" style={{ backgroundColor: s.bg }}>
-                <div className="text-[48px] mb-4">{s.icon}</div>
                 <h3 className="text-[20px] font-['Plus_Jakarta_Sans'] text-[#0F172A]" style={{ fontWeight: 700 }}>{s.title}</h3>
                 <p className="mt-2 text-[15px] text-[#64748B] font-['DM_Sans']">{s.desc}</p>
               </div>
@@ -87,9 +86,9 @@ export default function HomePage() {
             <thead>
               <tr className="bg-[#2563EB] text-white">
                 <th className="text-left p-4 font-['DM_Sans'] text-[15px]">Item</th>
-                <th className="text-right p-4 font-['DM_Sans'] text-[15px]">🫧 Wash</th>
-                <th className="text-right p-4 font-['DM_Sans'] text-[15px]">👔 Iron</th>
-                <th className="text-right p-4 font-['DM_Sans'] text-[15px]">✨ Dry Clean</th>
+                <th className="text-right p-4 font-['DM_Sans'] text-[15px]">Wash</th>
+                <th className="text-right p-4 font-['DM_Sans'] text-[15px]">Iron</th>
+                <th className="text-right p-4 font-['DM_Sans'] text-[15px]">Dry Clean</th>
               </tr>
             </thead>
             <tbody>
