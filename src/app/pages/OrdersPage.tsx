@@ -49,7 +49,7 @@ export default function OrdersPage() {
     showToast(`✅ Order ${id} marked as paid!`);
   };
 
-  const isOverdue = (o: Order) => o.status !== 'completed' && !o.paid && o.dueDate < '2026-03-27';
+  const isOverdue = (o: Order) => o.status !== 'completed' && !o.paid && o.dueDate < new Date().toLocaleDateString('en-CA');
 
   // Group filtered orders by customer category
   const groupedOrders = (() => {

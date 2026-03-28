@@ -1,19 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useStore, Order } from '../store';
 import { Button, WhatsAppButton } from '../components/ui';
 import { Printer, Check } from 'lucide-react';
 
 export default function BillingPage() {
-  const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, orders, setOrders, nextOrderId, showToast, laundryServices, customerCategories } = useStore();
+  const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, setOrders, nextOrderId, showToast, laundryServices, customerCategories, saveOrder } = useStore();
   const SERVICE_LABELS: Record<string, string> = Object.fromEntries(laundryServices.map(s => [s.key, s.label]));
   const navigate = useNavigate();
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState<'₹' | '%'>('₹');
   const [paid, setPaid] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [orderId] = useState(() => nextOrderId());
+  const [orderId, setOrderId] = useState('');
   const [dueDate, setDueDate] = useState('2026-03-30');
+
+  useEffect(() => {
+    nextOrderId().then(setOrderId);
+  }, [nextOrderId]);
 
   const subtotal = currentOrderItems.reduce((s, i) => s + i.unitPrice * i.qty, 0);
 
@@ -29,7 +33,7 @@ export default function BillingPage() {
 
   const whatsappMsg = `LaundroCare 🧺\n\nHi ${selectedCustomer?.name || ''},\nYour order #${orderId} has been registered.\n\nItems: ${totalPcs} pcs\nTotal: ₹${total}\nDue Date: ${dueDate}\n\nThank you for choosing LaundroCare!`;
 
-  const confirmOrder = () => {
+  const confirmOrder = async () => {
     const order: Order = {
       id: orderId,
       customerId: selectedCustomer?.id || '',
@@ -41,9 +45,10 @@ export default function BillingPage() {
       total,
       status: 'pending',
       paid,
-      createdAt: '2026-03-27',
+      createdAt: new Date().toLocaleDateString('en-CA'),
       dueDate,
     };
+    await saveOrder(order);
     setOrders(prev => [order, ...prev]);
     setConfirmed(true);
     showToast('✅ Order saved successfully!');

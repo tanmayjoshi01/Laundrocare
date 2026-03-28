@@ -11,18 +11,20 @@ export default function ReportsPage() {
   const [custSearch, setCustSearch] = useState('');
   const [expandedCust, setExpandedCust] = useState<string | null>(null);
 
-  const today = '2026-03-27';
+  const today = new Date().toLocaleDateString('en-CA');
+  const monthPrefix = today.slice(0, 7);
+  const yearPrefix = today.slice(0, 4);
 
   const stats = useMemo(() => {
     const todayOrders = orders.filter(o => o.createdAt === today);
     const todayEarnings = todayOrders.reduce((s, o) => s + o.total, 0);
 
     // Monthly: same month & year
-    const monthOrders = orders.filter(o => o.createdAt.startsWith('2026-03'));
+    const monthOrders = orders.filter(o => o.createdAt.startsWith(monthPrefix));
     const monthEarnings = monthOrders.reduce((s, o) => s + o.total, 0);
 
     // Yearly: same year
-    const yearOrders = orders.filter(o => o.createdAt.startsWith('2026'));
+    const yearOrders = orders.filter(o => o.createdAt.startsWith(yearPrefix));
     const yearEarnings = yearOrders.reduce((s, o) => s + o.total, 0);
 
     // Total (all-time)
@@ -36,7 +38,7 @@ export default function ReportsPage() {
     const unpaidAmount = orders.filter(o => !o.paid).reduce((s, o) => s + o.total, 0);
 
     return { todayEarnings, todayOrders: todayOrders.length, monthEarnings, monthOrders: monthOrders.length, yearEarnings, yearOrders: yearOrders.length, totalEarnings, totalOrders, pendingCount, completedCount, paidAmount, unpaidAmount };
-  }, [orders]);
+  }, [orders, monthPrefix, today, yearPrefix]);
 
   // Per-customer earnings
   const customerEarnings = useMemo(() => {

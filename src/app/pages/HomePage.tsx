@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui';
-import logoImg from 'figma:asset/29314f96b0646ef99b94a47ff8eedab177634f16.png';
+import logoImg from '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
 import { Phone, MapPin, Clock, ChevronRight } from 'lucide-react';
 
 const heroImg = 'https://images.unsplash.com/photo-1697251162315-f975b77eefc8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGVhbiUyMGxhdW5kcnklMjBjbG90aGVzJTIwcHJvZmVzc2lvbmFsfGVufDF8fHx8MTc3NDU4Nzg0OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';

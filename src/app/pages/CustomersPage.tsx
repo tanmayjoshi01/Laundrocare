@@ -21,7 +21,7 @@ function CategoryBadge({ categoryId, customerCategories }: { categoryId?: string
 }
 
 export default function CustomersPage() {
-  const { customers, setCustomers, orders, showToast, getCustomerDues, customerCategories } = useStore();
+  const { customers, setCustomers, orders, showToast, getCustomerDues, customerCategories, saveCustomer } = useStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Customer | null>(null);
@@ -46,10 +46,11 @@ export default function CustomersPage() {
     setEditing(true);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!selected || !editName || !editPhone) return;
     const updated = { ...selected, name: editName, phone: editPhone, address: editAddr, active: editActive, categoryId: editCategoryId || undefined };
     setCustomers(prev => prev.map(c => c.id === selected.id ? updated : c));
+    await saveCustomer(updated);
     setSelected(updated);
     setEditing(false);
     showToast('✅ Customer updated!');

@@ -5,7 +5,16 @@ import { Plus, Trash2, Edit, Check, X, Search, ArrowLeft, ChevronDown, ChevronUp
 import { useNavigate } from 'react-router';
 
 export default function SettingsPage() {
-  const { laundryItems, setLaundryItems, laundryServices, setLaundryServices, pricingList, setPricingList, showToast, customerCategories, setCustomerCategories } = useStore();
+  const {
+    laundryItems, setLaundryItems,
+    laundryServices, setLaundryServices,
+    pricingList, setPricingList,
+    showToast, customerCategories, setCustomerCategories,
+    saveCategory, deleteCategory: deleteCategoryInStore,
+    saveLaundryItem, deleteLaundryItem,
+    saveLaundryService, deleteLaundryService,
+    savePricing,
+  } = useStore();
   const navigate = useNavigate();
   const [tab, setTab] = useState<'pricing' | 'categories'>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -34,10 +43,12 @@ export default function SettingsPage() {
   const [editCatDiscount, setEditCatDiscount] = useState(0);
   const [editCatColor, setEditCatColor] = useState('');
 
-  const addItem = () => {
+  const addItem = async () => {
     if (!newItemName.trim()) return;
     const id = `i${Date.now()}`;
-    setLaundryItems(prev => [...prev, { id, name: newItemName.trim() }]);
+    const newItem = { id, name: newItemName.trim() };
+    setLaundryItems(prev => [...prev, newItem]);
+    await saveLaundryItem(newItem);
     const newEntries = laundryServices.map(s => ({ itemId: id, serviceKey: s.key, price: 0 }));
     setPricingList(prev => [...prev, ...newEntries]);
     setNewItemName('');
@@ -45,8 +56,9 @@ export default function SettingsPage() {
     showToast('✅ Item added!');
   };
 
-  const deleteItem = (id: string) => {
+  const deleteItem = async (id: string) => {
     setLaundryItems(prev => prev.filter(i => i.id !== id));
+    await deleteLaundryItem(id);
     setPricingList(prev => prev.filter(p => p.itemId !== id));
     if (pricingItemId === id) setPricingItemId(null);
     showToast('🗑️ Item deleted');
@@ -57,18 +69,21 @@ export default function SettingsPage() {
     setEditItemName(item.name);
   };
 
-  const saveEditItem = () => {
+  const saveEditItem = async () => {
     if (!editingItem || !editItemName.trim()) return;
     setLaundryItems(prev => prev.map(i => i.id === editingItem ? { ...i, name: editItemName.trim() } : i));
+    await saveLaundryItem({ id: editingItem, name: editItemName.trim() });
     setEditingItem(null);
     showToast('✅ Item updated!');
   };
 
-  const addService = () => {
+  const addService = async () => {
     if (!newSvcLabel.trim()) return;
     const key = newSvcLabel.trim().toLowerCase().replace(/\s+/g, '');
     const id = `s${Date.now()}`;
-    setLaundryServices(prev => [...prev, { id, key, label: newSvcLabel.trim() }]);
+    const newSvc = { id, key, label: newSvcLabel.trim() };
+    setLaundryServices(prev => [...prev, newSvc]);
+    await saveLaundryService(newSvc);
     const newEntries = laundryItems.map(i => ({ itemId: i.id, serviceKey: key, price: 0 }));
     setPricingList(prev => [...prev, ...newEntries]);
     setNewSvcLabel('');
@@ -76,8 +91,9 @@ export default function SettingsPage() {
     showToast('✅ Service added!');
   };
 
-  const deleteService = (id: string, key: string) => {
+  const deleteService = async (id: string, key: string) => {
     setLaundryServices(prev => prev.filter(s => s.id !== id));
+    await deleteLaundryService(id, key);
     setPricingList(prev => prev.filter(p => p.serviceKey !== key));
     showToast('🗑️ Service deleted');
   };
@@ -87,11 +103,12 @@ export default function SettingsPage() {
     setEditSvcLabel(svc.label);
   };
 
-  const saveEditSvc = () => {
+  const saveEditSvc = async () => {
     if (!editingSvc || !editSvcLabel.trim()) return;
     const oldSvc = laundryServices.find(s => s.id === editingSvc);
     const newKey = editSvcLabel.trim().toLowerCase().replace(/\s+/g, '');
     setLaundryServices(prev => prev.map(s => s.id === editingSvc ? { ...s, key: newKey, label: editSvcLabel.trim() } : s));
+    await saveLaundryService({ id: editingSvc, key: newKey, label: editSvcLabel.trim() });
     if (oldSvc && oldSvc.key !== newKey) {
       setPricingList(prev => prev.map(p => p.serviceKey === oldSvc.key ? { ...p, serviceKey: newKey } : p));
     }
@@ -99,12 +116,13 @@ export default function SettingsPage() {
     showToast('✅ Service updated!');
   };
 
-  const updatePrice = (itemId: string, serviceKey: string, price: number) => {
+  const updatePrice = async (itemId: string, serviceKey: string, price: number) => {
     setPricingList(prev => {
       const exists = prev.find(p => p.itemId === itemId && p.serviceKey === serviceKey);
       if (exists) return prev.map(p => p.itemId === itemId && p.serviceKey === serviceKey ? { ...p, price } : p);
       return [...prev, { itemId, serviceKey, price }];
     });
+    await savePricing(itemId, serviceKey, price);
   };
 
   const getPrice = (itemId: string, serviceKey: string) => {
@@ -113,16 +131,19 @@ export default function SettingsPage() {
 
   const filteredPricingItems = laundryItems.filter(i => i.name.toLowerCase().includes(priceSearch.toLowerCase()));
 
-  const addCategory = () => {
+  const addCategory = async () => {
     if (!newCatName.trim()) return;
     const id = `c${Date.now()}`;
-    setCustomerCategories(prev => [...prev, { id, name: newCatName.trim(), discount: newCatDiscount, color: newCatColor }]);
+    const newCat = { id, name: newCatName.trim(), discount: newCatDiscount, color: newCatColor };
+    setCustomerCategories(prev => [...prev, newCat]);
+    await saveCategory(newCat);
     setNewCatName(''); setNewCatDiscount(0); setNewCatColor('#2563EB');
     showToast('✅ Category added!');
   };
 
-  const deleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     setCustomerCategories(prev => prev.filter(c => c.id !== id));
+    await deleteCategoryInStore(id);
     showToast('🗑️ Category deleted');
   };
 
@@ -133,9 +154,11 @@ export default function SettingsPage() {
     setEditCatColor(cat.color);
   };
 
-  const saveEditCat = () => {
+  const saveEditCat = async () => {
     if (!editingCat || !editCatName.trim()) return;
-    setCustomerCategories(prev => prev.map(c => c.id === editingCat ? { ...c, name: editCatName.trim(), discount: editCatDiscount, color: editCatColor } : c));
+    const updatedCat = { id: editingCat, name: editCatName.trim(), discount: editCatDiscount, color: editCatColor };
+    setCustomerCategories(prev => prev.map(c => c.id === editingCat ? { ...c, ...updatedCat } : c));
+    await saveCategory(updatedCat);
     setEditingCat(null);
     showToast('✅ Category updated!');
   };
@@ -343,7 +366,7 @@ export default function SettingsPage() {
                     <span className="flex-1 font-['DM_Sans'] text-[16px] text-[#0F172A]" style={{ fontWeight: 500 }}>{cat.name}</span>
                     <span className="font-['JetBrains_Mono'] text-[13px] text-[#16A34A] bg-[#F0FDF4] px-3 py-1 rounded-full border border-[#BBF7D0]" style={{ fontWeight: 600 }}>{cat.discount}%</span>
                     <button onClick={() => startEditCat(cat)} className="w-9 h-9 rounded-[6px] bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center cursor-pointer hover:bg-[#DBEAFE]"><Edit size={16} /></button>
-                    <button onClick={() => deleteCategory(cat.id)} className="w-9 h-9 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] flex items-center justify-center cursor-pointer hover:bg-[#FEE2E2]"><Trash2 size={16} /></button>
+                    <button onClick={() => handleDeleteCategory(cat.id)} className="w-9 h-9 rounded-[6px] bg-[#FEF2F2] text-[#DC2626] flex items-center justify-center cursor-pointer hover:bg-[#FEE2E2]"><Trash2 size={16} /></button>
                   </>
                 )}
               </div>

@@ -7,7 +7,7 @@ import { getWhatsAppBillUrl } from '../components/whatsapp-bill';
 
 export default function CheckoutPage() {
   const { orderId } = useParams<{ orderId: string }>();
-  const { orders, setOrders, showToast, laundryServices, getCustomerCategory } = useStore();
+  const { orders, showToast, laundryServices, getCustomerCategory, updateOrder } = useStore();
   const navigate = useNavigate();
 
   const order = orders.find(o => o.id === orderId);
@@ -35,13 +35,12 @@ export default function CheckoutPage() {
   const liveOrder = { ...order, status: completed ? 'completed' as const : order.status, paid, paymentMethod: paid ? paymentMethod : '' as const };
   const whatsappUrl = getWhatsAppBillUrl(liveOrder, laundryServices, cat || undefined);
 
-  const handleComplete = () => {
-    setOrders(prev => prev.map(o => o.id === orderId ? {
-      ...o,
-      status: 'completed' as const,
+  const handleComplete = async () => {
+    await updateOrder(orderId!, {
+      status: 'completed',
       paid,
       paymentMethod: paid ? paymentMethod : '',
-    } : o));
+    });
     setCompleted(true);
     showToast(`✅ Order #${orderId} completed${paid ? ' & paid' : ''}!`);
   };

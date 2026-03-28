@@ -27,7 +27,7 @@ export default function CreateOrderPage() {
 
   const addCustomer = () => {
     if (!newName || !newPhone) return;
-    const c: Customer = { id: `C${Date.now()}`, name: newName, phone: newPhone, address: newAddr, totalOrders: 0, totalSpent: 0, pendingDues: 0, lastVisit: '2026-03-27', active: true };
+    const c: Customer = { id: `C${Date.now()}`, name: newName, phone: newPhone, address: newAddr, totalOrders: 0, totalSpent: 0, pendingDues: 0, lastVisit: new Date().toLocaleDateString('en-CA'), active: true };
     setCustomers(prev => [c, ...prev]);
     setSelectedCustomer(c);
     setShowAddForm(false);

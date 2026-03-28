@@ -5,7 +5,7 @@ import { Button } from '../components/ui';
 import { ArrowLeft, Phone, Info, Plus, UserPlus } from 'lucide-react';
 
 export default function RegisterCustomerPage() {
-  const { customers, setCustomers, customerCategories, showToast, setSelectedCustomer } = useStore();
+  const { customers, setCustomers, customerCategories, showToast, setSelectedCustomer, saveCustomer } = useStore();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -27,7 +27,7 @@ export default function RegisterCustomerPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
     const c: Customer = {
       id: `C${Date.now()}`,
@@ -37,12 +37,13 @@ export default function RegisterCustomerPage() {
       totalOrders: 0,
       totalSpent: 0,
       pendingDues: 0,
-      lastVisit: '2026-03-28',
+      lastVisit: new Date().toLocaleDateString('en-CA'),
       active: true,
       categoryId: categoryId || undefined,
       notes: notes.trim() || undefined,
     };
     setCustomers(prev => [c, ...prev]);
+    await saveCustomer(c);
     setSelectedCustomer(c);
     showToast(`✅ ${c.name} registered successfully!`);
     navigate('/create-order');
