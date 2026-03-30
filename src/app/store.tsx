@@ -19,9 +19,14 @@ export interface OrderItem {
 export interface Order {
   id: string; customerId: string; customerName: string; customerPhone: string;
   items: OrderItem[]; subtotal: number; discount: number; total: number;
-  status: 'pending' | 'completed'; paid: boolean;
-  paymentMethod?: 'cash' | 'upi' | 'online' | ''; createdAt: string; dueDate: string;
-  paymentLink?: string; paymentLinkId?: string;
+  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  paid: boolean;
+  paymentMethod?: 'cash' | 'online' | 'upi' | '';
+  createdAt: string;
+  dueDate: string;
+  paymentLink?: string;
+  paymentLinkId?: string;
+  billUrl?: string;
 }
 export interface LaundryItem { id: string; name: string; }
 export interface LaundryService { id: string; key: string; label: string; }
@@ -313,6 +318,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       todayEarnings: todayOrders.reduce((s, o) => s + o.total, 0),
       paidAmount: todayOrders.filter(o => o.paid).reduce((s, o) => s + o.total, 0),
       unpaidAmount: todayOrders.filter(o => !o.paid).reduce((s, o) => s + o.total, 0),
+      upiTotal: todayOrders.filter(o => o.paid && o.paymentMethod === 'upi').reduce((s, o) => s + o.total, 0),
+      cashTotal: todayOrders.filter(o => o.paid && o.paymentMethod === 'cash').reduce((s, o) => s + o.total, 0),
       pending: todayOrders.filter(o => o.status === 'pending').length,
       completed: todayOrders.filter(o => o.status === 'completed').length,
     };

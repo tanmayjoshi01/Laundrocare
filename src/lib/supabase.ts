@@ -49,5 +49,6 @@ export function mapOrder(row: any, items: any[]) {
     dueDate: row.due_date,
     paymentLink: row.payment_link || undefined,
     paymentLinkId: row.payment_link_id || undefined,
+    billUrl: row.bill_url || undefined,
   };
 }

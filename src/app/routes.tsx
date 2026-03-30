@@ -12,6 +12,7 @@ import ReportsPage from './pages/ReportsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import RegisterCustomerPage from './pages/RegisterCustomerPage';
 import AdminLayout from './components/AdminLayout';
+import DeliveryPage from './pages/DeliveryPage';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
           { path: 'reports', Component: ReportsPage },
           { path: 'checkout/:orderId', Component: CheckoutPage },
           { path: 'register-customer', Component: RegisterCustomerPage },
+          { path: 'delivery/:orderId', Component: DeliveryPage },
         ],
       },
     ],
