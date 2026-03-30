@@ -3,7 +3,7 @@ import { Button } from '../components/ui';
 import logoImg from '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
 import { Phone, MapPin, Clock, ChevronRight } from 'lucide-react';
 
-const heroImg = 'https://images.unsplash.com/photo-1697251162315-f975b77eefc8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjbGVhbiUyMGxhdW5kcnklMjBjbG90aGVzJTIwcHJvZmVzc2lvbmFsfGVufDF8fHx8MTc3NDU4Nzg0OHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+const heroImg = 'src/assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
 
 const PRICING_DATA = [
   { item: 'Shirt', wash: 10, iron: 8, dryclean: 40 },
@@ -27,7 +27,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-4">
             <a href="tel:+919876543210" className="flex items-center gap-2 text-[#0F172A] font-['DM_Sans'] text-[15px]">
-              <Phone size={18} className="text-[#2563EB]" /> +91 98765 43210
+              <Phone size={18} className="text-[#2563EB]" /> +91 9860185009
             </a>
             <Button variant="primary" size="sm" onClick={() => navigate('/login')}>Admin Login</Button>
           </div>
@@ -35,7 +35,8 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="relative w-full h-[400px] flex items-center justify-center bg-white rounded-2xl shadow-xl overflow-hidden p-8">
+
         <div>
           <h1 className="text-[40px] font-['Plus_Jakarta_Sans'] text-[#0F172A] leading-tight" style={{ fontWeight: 800 }}>
             Professional Laundry,<br />Done Right
@@ -48,7 +49,7 @@ export default function HomePage() {
             <Button variant="primary" size="lg" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
               📋 View Pricing
             </Button>
-            <a href="tel:+919876543210">
+            <a href="tel:+919860185009">
               <Button variant="success-outline" size="lg">📞 Call Now</Button>
             </a>
             <Button variant="ghost" size="lg" onClick={() => navigate('/login')}>🔐 Admin Login</Button>
@@ -115,22 +116,46 @@ export default function HomePage() {
             <h2 className="text-[28px] font-['Plus_Jakarta_Sans'] text-[#0F172A]" style={{ fontWeight: 700 }}>Contact Us</h2>
             <div className="mt-6 space-y-4 font-['DM_Sans'] text-[15px] text-[#0F172A]">
               <div className="flex items-start gap-3"><MapPin size={20} className="text-[#2563EB] mt-0.5" /> 12, Market Road, Near Bus Stand, City</div>
-              <div className="flex items-center gap-3"><Phone size={20} className="text-[#2563EB]" /> +91 98765 43210 / +91 98765 43211</div>
-              <div className="flex items-center gap-3"><Clock size={20} className="text-[#2563EB]" /> Mon–Sat: 8:00 AM – 9:00 PM</div>
+              <div className="flex items-center gap-3"><Phone size={20} className="text-[#2563EB]" /> +91 9860185009 / +91 9422029929</div>
+              <div className="flex items-center gap-3"><Clock size={20} className="text-[#2563EB]" /> Mon–Sat: 8:00 AM – 8:00 PM</div>
             </div>
             <div className="mt-6">
-              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-[52px] px-6 rounded-[8px] bg-[#25D366] text-white hover:bg-[#1ebe57] transition-colors font-['DM_Sans']">
-                📱 Chat on WhatsApp
+              <a href="https://wa.me/9860185009" target="_blank" style={{ textDecoration: 'none', color: 'black', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 448 512" fill="#25D366">
+                  <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.5-11.3 2.5-2.5 5.5-6.5 8.3-9.7 2.8-3.3 3.7-5.6 5.5-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                </svg>
+                Chat on WhatsApp
               </a>
             </div>
           </div>
-          <div className="bg-[#F1F5F9] rounded-[12px] flex items-center justify-center min-h-[280px]">
-            <div className="text-center text-[#64748B] font-['DM_Sans']">
-              <MapPin size={48} className="mx-auto mb-3 text-[#2563EB]" />
-              <p className="text-[15px]">Google Map Placeholder</p>
-              <p className="text-[13px]">12, Market Road, City</p>
-            </div>
+          {/* --- COPY STARTING HERE --- */}
+          <div className="w-full h-[450px] rounded-[12px] overflow-hidden shadow-lg border border-gray-100 relative group">
+
+            {/* The Visual Map (The one you already have) */}
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3809.0760453303666!2d73.318043675037!3d16.99530438383822!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be01604786bdcb5%3A0x1eb03533be70423d!2sYashodeep%20Complex!5e0!3m2!1sen!2sin!4v1740756312456!5m2!1sen!2sin"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+
+            ></iframe>
+
+            {/* Floating "Get Directions" Button to show the Blue Line Route */}
+            <button
+              onClick={() => {
+                const destination = "Yashodeep+Complex+Ratnagiri";
+                const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+                window.open(url, '_blank');
+              }}
+              className="absolute bottom-4 right-4 bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-lg hover:bg-blue-700 transition-all font-medium flex items-center gap-2"
+            >
+              <span>📍 View Route</span>
+            </button>
           </div>
+          {/* --- COPY ENDING HERE --- */}
         </div>
       </section>
 
