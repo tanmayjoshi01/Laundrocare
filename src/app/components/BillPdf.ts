@@ -1,6 +1,7 @@
 import { Order, LaundryService, CustomerCategory } from '../store';
 import { supabase } from '../../lib/supabase';
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 export async function generateBillPdf(
   order: Order,
@@ -159,22 +160,37 @@ export async function generateBillPdf(
   }
   y += 10;
 
-  // Payment link
-  if (order.paymentLink && !order.paid) {
-    doc.setFillColor(239, 246, 255);
-    doc.roundedRect(5, y - 2, w - 10, 10, 1, 1, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(37, 99, 235);
-    doc.text('Pay Online:', w / 2, y + 1.5, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6);
-    doc.setTextColor(37, 99, 235);
-    doc.textWithLink(order.paymentLink, w / 2, y + 5.5, {
-      align: 'center',
-      url: order.paymentLink,
-    });
-    y += 13;
+  // Payment link or QR
+  if (!order.paid) {
+    try {
+      const paymentUrl = order.paymentLink || `upi://pay?pa=9860185009@ybl&pn=LaundroCare&am=${order.total}&cu=INR`;
+      const qrDataUrl = await QRCode.toDataURL(paymentUrl, { margin: 1, width: 150 });
+      
+      const qrSize = 24;
+      doc.addImage(qrDataUrl, 'PNG', w / 2 - qrSize / 2, y, qrSize, qrSize);
+      y += qrSize + 3;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(37, 99, 235);
+      doc.text(order.paymentLink ? 'Scan to Pay Online' : 'Scan to Pay via UPI', w / 2, y, { align: 'center' });
+      y += 6;
+    } catch (e) {
+      console.error('QR Generate Error', e);
+      // Fallback to text link if QR fails
+      if (order.paymentLink) {
+        doc.setFillColor(239, 246, 255);
+        doc.roundedRect(5, y - 2, w - 10, 10, 1, 1, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(37, 99, 235);
+        doc.text('Pay Online:', w / 2, y + 1.5, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.textWithLink(order.paymentLink, w / 2, y + 5.5, { align: 'center', url: order.paymentLink });
+        y += 13;
+      }
+    }
   }
 
   // Footer

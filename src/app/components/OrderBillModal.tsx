@@ -3,6 +3,7 @@ import { X, Printer, MessageCircle, Download, ExternalLink } from 'lucide-react'
 import { Button, StatusBadge } from './ui';
 import { getWhatsAppBillUrl } from './whatsapp-bill';
 import { downloadBillPdf } from './BillPdf';
+import QRCode from 'qrcode';
 
 interface OrderBillModalProps {
   order: Order;
@@ -20,9 +21,26 @@ export function OrderBillModal({ order, onClose }: OrderBillModalProps) {
     await downloadBillPdf(order, laundryServices, cat || undefined);
   };
 
-  const printReceipt = () => {
+  const printReceipt = async () => {
     const now = new Date();
     const timestamp = now.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+    let qrHtml = '';
+    if (!order.paid) {
+      try {
+        const paymentUrl = order.paymentLink || `upi://pay?pa=9860185009@ybl&pn=LaundroCare&am=${order.total}&cu=INR`;
+        const qrDataUrl = await QRCode.toDataURL(paymentUrl, { margin: 1, width: 140 });
+        qrHtml = `
+          <div style="margin-top:16px;text-align:center;">
+            <img src="${qrDataUrl}" width="140" height="140" style="margin:0 auto;display:block;border-radius:8px;border:1px solid #E2E8F0;" />
+            <div style="font-size:13px;color:#2563EB;margin-top:6px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;">Scan to Pay</div>
+          </div>
+        `;
+      } catch (e) {
+        console.error('QR Generate Error', e);
+      }
+    }
+
     const itemRows = order.items.map(i =>
       `<tr>
         <td style="padding:6px 8px;border-bottom:1px solid #eee;font-family:'DM Sans',sans-serif;font-size:13px">${i.item}</td>
@@ -71,6 +89,7 @@ export function OrderBillModal({ order, onClose }: OrderBillModalProps) {
         <div style="margin-top:12px;text-align:center;padding:8px;border-radius:6px;font-size:14px;font-weight:600;${order.paid ? 'background:#DCFCE7;color:#166534' : 'background:#FEF2F2;color:#991B1B'}">
           ${order.paid ? `✅ PAID${order.paymentMethod ? ` via ${order.paymentMethod === 'upi' ? 'UPI' : 'Cash'}` : ''}` : '⏳ UNPAID'}
         </div>
+        ${qrHtml}
         <div style="margin-top:16px;text-align:center;font-size:11px;color:#94A3B8;border-top:1px dashed #E2E8F0;padding-top:12px">
           Printed: ${timestamp}<br>Thank you for choosing LaundroCare!
         </div>
