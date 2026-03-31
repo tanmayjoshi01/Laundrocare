@@ -28,13 +28,13 @@ export function OrderBillModal({ order, onClose }: OrderBillModalProps) {
     let qrHtml = '';
     if (!order.paid) {
       try {
-        const paymentUrl = order.paymentLink || `upi://pay?pa=9860185009@ybl&pn=LaundroCare&am=${order.total}&cu=INR`;
+        const paymentUrl = `upi://pay?pa=effortamol@okicici&pn=LaundroCare&am=${order.total}&cu=INR`;
         const qr = new QRious({ value: paymentUrl, size: 140, padding: 10 });
         const qrDataUrl = qr.toDataURL();
         qrHtml = `
           <div style="margin-top:16px;text-align:center;">
             <img src="${qrDataUrl}" width="140" height="140" style="margin:0 auto;display:block;border-radius:8px;border:1px solid #E2E8F0;" />
-            <div style="font-size:13px;color:#2563EB;margin-top:6px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;">Scan to Pay</div>
+            <div style="font-size:13px;color:#2563EB;margin-top:6px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;">Scan to Pay via UPI</div>
           </div>
         `;
       } catch (e) {

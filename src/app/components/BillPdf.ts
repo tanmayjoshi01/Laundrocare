@@ -163,7 +163,7 @@ export async function generateBillPdf(
   // Payment link or QR
   if (!order.paid) {
     try {
-      const paymentUrl = order.paymentLink || `upi://pay?pa=9860185009@ybl&pn=LaundroCare&am=${order.total}&cu=INR`;
+      const paymentUrl = `upi://pay?pa=effortamol@okicici&pn=LaundroCare&am=${order.total}&cu=INR`;
       const qr = new QRious({ value: paymentUrl, size: 150, padding: 10 });
       const qrDataUrl = qr.toDataURL();
       
@@ -174,7 +174,7 @@ export async function generateBillPdf(
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7);
       doc.setTextColor(37, 99, 235);
-      doc.text(order.paymentLink ? 'Scan to Pay Online' : 'Scan to Pay via UPI', w / 2, y, { align: 'center' });
+      doc.text('Scan to Pay via UPI', w / 2, y, { align: 'center' });
       y += 6;
     } catch (e) {
       console.error('QR Generate Error', e);
