@@ -3,7 +3,7 @@ import { Button } from '../components/ui';
 import logoImg from '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
 import { Phone, MapPin, Clock, ChevronRight } from 'lucide-react';
 
-const heroImg = 'src/assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
+const heroImg = '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
 
 const PRICING_DATA = [
   { item: 'Shirt', wash: 10, iron: 8, dryclean: 40 },
@@ -26,7 +26,7 @@ export default function HomePage() {
             <span className="text-[20px] font-['Plus_Jakarta_Sans'] text-[#2563EB]" style={{ fontWeight: 700 }}>LaundroCare</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="tel:+919876543210" className="flex items-center gap-2 text-[#0F172A] font-['DM_Sans'] text-[15px]">
+            <a href="tel:+919860185009" className="flex items-center gap-2 text-[#0F172A] font-['DM_Sans'] text-[15px]">
               <Phone size={18} className="text-[#2563EB]" /> +91 9860185009
             </a>
             <Button variant="primary" size="sm" onClick={() => navigate('/login')}>Admin Login</Button>
