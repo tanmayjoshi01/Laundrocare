@@ -22,7 +22,7 @@ export default function HomePage() {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[64px] sm:h-[72px] flex items-center justify-between gap-2">
-          
+
           {/* Logo — left side */}
           <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
             <img src={logoImg} alt="LaundroCare" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover" />
@@ -51,7 +51,7 @@ export default function HomePage() {
               <Phone size={18} />
             </a>
             <Button variant="primary" size="sm" onClick={() => navigate('/login')}>
-              <span className="hidden xs:inline">Admin </span>Login
+              <span className="hidden xs:inline">Admin </span>Admin Login
             </Button>
           </div>
 
@@ -76,7 +76,7 @@ export default function HomePage() {
             <a href="tel:+919860185009">
               <Button variant="success-outline" size="lg">📞 Call Now</Button>
             </a>
-            <Button variant="ghost" size="lg" onClick={() => navigate('/login')}>🔐 Admin Login</Button>
+            {/* <Button variant="ghost" size="lg" onClick={() => navigate('/login')}>🔐 Admin Login</Button> */}
           </div>
         </div>
         <div className="flex justify-center">
