@@ -59,28 +59,27 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative w-full h-[400px] flex items-center justify-center bg-white rounded-2xl shadow-xl overflow-hidden p-8">
-
-        <div>
-          <h1 className="text-[40px] font-['Plus_Jakarta_Sans'] text-[#0F172A] leading-tight" style={{ fontWeight: 800 }}>
-            Professional Laundry,<br />Done Right
+      <section className="relative w-full min-h-[400px] py-10 px-6 sm:p-8 flex flex-col-reverse md:flex-row items-center justify-center md:justify-between bg-white rounded-2xl shadow-xl overflow-hidden gap-8">
+        
+        <div className="w-full md:w-1/2 text-center md:text-left">
+          <h1 className="text-[32px] sm:text-[40px] font-['Plus_Jakarta_Sans'] text-[#0F172A] leading-tight" style={{ fontWeight: 800 }}>
+            Professional Laundry,<br className="hidden sm:block" />Done Right
           </h1>
-          <p className="mt-3 text-[20px] text-[#2563EB] font-['DM_Sans']" style={{ fontWeight: 500 }}>Clean Clothes, Clean Confidence</p>
-          <p className="mt-4 text-[16px] text-[#64748B] font-['DM_Sans'] max-w-md">
+          <p className="mt-3 text-[18px] sm:text-[20px] text-[#2563EB] font-['DM_Sans']" style={{ fontWeight: 500 }}>Clean Clothes, Clean Confidence</p>
+          <p className="mt-4 text-[15px] sm:text-[16px] text-[#64748B] font-['DM_Sans'] max-w-md mx-auto md:mx-0">
             Trusted by families in your city. Fast turnaround. Doorstep pickup available.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Button variant="primary" size="lg" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
+          <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-4 justify-center md:justify-start">
+            <Button variant="primary" size="lg" className="w-full sm:w-auto" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
               📋 View Pricing
             </Button>
-            <a href="tel:+919860185009">
-              <Button variant="success-outline" size="lg">📞 Call Now</Button>
+            <a href="tel:+919860185009" className="w-full sm:w-auto">
+              <Button variant="success-outline" size="lg" className="w-full">📞 Call Now</Button>
             </a>
-            {/* <Button variant="ghost" size="lg" onClick={() => navigate('/login')}>🔐 Admin Login</Button> */}
           </div>
         </div>
-        <div className="flex justify-center">
-          <img src={heroImg} alt="Laundry service" className="rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] max-h-[400px] object-cover w-full" />
+        <div className="w-full md:w-1/2 flex justify-center pb-4 md:pb-0">
+          <img src={heroImg} alt="Laundry service" className="rounded-[16px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] max-w-[200px] md:max-w-full max-h-[300px] md:max-h-[400px] object-cover" />
         </div>
       </section>
 
@@ -104,10 +103,10 @@ export default function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-16 max-w-7xl mx-auto px-6">
-        <h2 className="text-[28px] font-['Plus_Jakarta_Sans'] text-[#0F172A] text-center" style={{ fontWeight: 700 }}>Simple, Transparent Pricing</h2>
-        <div className="mt-10 bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)] overflow-hidden">
-          <table className="w-full">
+      <section id="pricing" className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+        <h2 className="text-[24px] sm:text-[28px] font-['Plus_Jakarta_Sans'] text-[#0F172A] text-center" style={{ fontWeight: 700 }}>Simple, Transparent Pricing</h2>
+        <div className="mt-10 bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)] overflow-x-auto">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="bg-[#2563EB] text-white">
                 <th className="text-left p-4 font-['DM_Sans'] text-[15px]">Item</th>
