@@ -21,17 +21,40 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0]">
-        <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logoImg} alt="LaundroCare" className="h-10 w-10 rounded-lg object-cover" />
-            <span className="text-[20px] font-['Plus_Jakarta_Sans'] text-[#2563EB]" style={{ fontWeight: 700 }}>LaundroCare</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[64px] sm:h-[72px] flex items-center justify-between gap-2">
+          
+          {/* Logo — left side */}
+          <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => navigate('/')}>
+            <img src={logoImg} alt="LaundroCare" className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover" />
+            <span
+              className="text-[16px] sm:text-[20px] font-['Plus_Jakarta_Sans'] text-[#2563EB]"
+              style={{ fontWeight: 700 }}
+            >
+              LaundroCare
+            </span>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="tel:+919860185009" className="flex items-center gap-2 text-[#0F172A] font-['DM_Sans'] text-[15px]">
-              <Phone size={18} className="text-[#2563EB]" /> +91 9860185009
+
+          {/* Right side — phone hidden on very small screens */}
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <a
+              href="tel:+919860185009"
+              className="hidden sm:flex items-center gap-2 text-[#0F172A] font-['DM_Sans'] text-[14px]"
+            >
+              <Phone size={16} className="text-[#2563EB]" />
+              +91 9860185009
             </a>
-            <Button variant="primary" size="sm" onClick={() => navigate('/login')}>Admin Login</Button>
+            {/* Phone icon only on mobile — no number text */}
+            <a
+              href="tel:+919860185009"
+              className="flex sm:hidden w-9 h-9 items-center justify-center rounded-[8px] bg-[#EFF6FF] text-[#2563EB]"
+            >
+              <Phone size={18} />
+            </a>
+            <Button variant="primary" size="sm" onClick={() => navigate('/login')}>
+              <span className="hidden xs:inline">Admin </span>Login
+            </Button>
           </div>
+
         </div>
       </nav>
 

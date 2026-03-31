@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: [
         'favicon.ico',
-        'apple-touch-icon-180x180.png',
-        'maskable-icon-512x512.png',
+        'logo.png',
+        'icons/*.png',
       ],
       manifest: {
         name: 'LaundroCare',
