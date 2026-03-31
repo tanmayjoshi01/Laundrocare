@@ -115,7 +115,7 @@ export default function HomePage() {
           <div>
             <h2 className="text-[28px] font-['Plus_Jakarta_Sans'] text-[#0F172A]" style={{ fontWeight: 700 }}>Contact Us</h2>
             <div className="mt-6 space-y-4 font-['DM_Sans'] text-[15px] text-[#0F172A]">
-              <div className="flex items-start gap-3"><MapPin size={20} className="text-[#2563EB] mt-0.5" /> 12, Market Road, Near Bus Stand, City</div>
+              <div className="flex items-start gap-3"><MapPin size={20} className="text-[#2563EB] mt-0.5" /> Near effort the gym, Shivaji Nagar, Kolhapur - Ratnagiri Road, Ratnagiri 415612</div>
               <div className="flex items-center gap-3"><Phone size={20} className="text-[#2563EB]" /> +91 9860185009 / +91 9422029929</div>
               <div className="flex items-center gap-3"><Clock size={20} className="text-[#2563EB]" /> Mon–Sat: 8:00 AM – 8:00 PM</div>
             </div>
