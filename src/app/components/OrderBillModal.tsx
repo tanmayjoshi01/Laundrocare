@@ -3,7 +3,7 @@ import { X, Printer, MessageCircle, Download, ExternalLink } from 'lucide-react'
 import { Button, StatusBadge } from './ui';
 import { getWhatsAppBillUrl } from './whatsapp-bill';
 import { downloadBillPdf } from './BillPdf';
-import QRCode from 'qrcode';
+import QRious from 'qrious';
 
 interface OrderBillModalProps {
   order: Order;
@@ -29,7 +29,8 @@ export function OrderBillModal({ order, onClose }: OrderBillModalProps) {
     if (!order.paid) {
       try {
         const paymentUrl = order.paymentLink || `upi://pay?pa=9860185009@ybl&pn=LaundroCare&am=${order.total}&cu=INR`;
-        const qrDataUrl = await QRCode.toDataURL(paymentUrl, { margin: 1, width: 140 });
+        const qr = new QRious({ value: paymentUrl, size: 140, padding: 10 });
+        const qrDataUrl = qr.toDataURL();
         qrHtml = `
           <div style="margin-top:16px;text-align:center;">
             <img src="${qrDataUrl}" width="140" height="140" style="margin:0 auto;display:block;border-radius:8px;border:1px solid #E2E8F0;" />

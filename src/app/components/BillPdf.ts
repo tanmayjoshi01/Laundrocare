@@ -1,7 +1,7 @@
 import { Order, LaundryService, CustomerCategory } from '../store';
 import { supabase } from '../../lib/supabase';
 import jsPDF from 'jspdf';
-import QRCode from 'qrcode';
+import QRious from 'qrious';
 
 export async function generateBillPdf(
   order: Order,
@@ -164,7 +164,8 @@ export async function generateBillPdf(
   if (!order.paid) {
     try {
       const paymentUrl = order.paymentLink || `upi://pay?pa=9860185009@ybl&pn=LaundroCare&am=${order.total}&cu=INR`;
-      const qrDataUrl = await QRCode.toDataURL(paymentUrl, { margin: 1, width: 150 });
+      const qr = new QRious({ value: paymentUrl, size: 150, padding: 10 });
+      const qrDataUrl = qr.toDataURL();
       
       const qrSize = 24;
       doc.addImage(qrDataUrl, 'PNG', w / 2 - qrSize / 2, y, qrSize, qrSize);
