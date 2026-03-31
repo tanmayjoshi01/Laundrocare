@@ -4,6 +4,7 @@ import { Outlet, useNavigate } from 'react-router';
 import { useStore } from '../store';
 import { Toast } from './ui';
 import { LogOut } from 'lucide-react';
+import { InstallPrompt } from './InstallPrompt';
 
 export default function AdminLayout() {
   const { shopOpen, setShopOpen, isLoggedIn, loading, toastMessage, signOut } = useStore();
@@ -29,8 +30,8 @@ export default function AdminLayout() {
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <nav className="bg-white border-b border-[#E2E8F0] h-[72px] flex items-center px-6 sticky top-0 z-50">
+    <div className="min-h-screen bg-[#F8FAFC]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav className="bg-white border-b border-[#E2E8F0] h-[72px] flex items-center px-4 sm:px-6 sticky top-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
           <img src={logoImg} alt="LaundroCare" className="h-9 w-9 rounded-lg object-cover" />
           <span className="text-[18px] font-['Plus_Jakarta_Sans'] text-[#2563EB] hidden sm:block" style={{ fontWeight: 700 }}>LaundroCare</span>
@@ -56,6 +57,7 @@ export default function AdminLayout() {
       </nav>
       <Outlet />
       <Toast message={toastMessage} />
+      <InstallPrompt />
     </div>
   );
 }

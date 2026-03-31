@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LaundroCare — Offline</title>
+  <style>
+    body { margin:0; font-family: -apple-system, sans-serif; background:#F8FAFC; display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:24px; box-sizing:border-box; }
+    .card { background:white; border-radius:16px; padding:40px 32px; max-width:320px; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .icon { font-size:64px; margin-bottom:16px; }
+    h1 { font-size:22px; color:#0F172A; margin:0 0 8px; font-weight:700; }
+    p { font-size:15px; color:#64748B; margin:0 0 24px; line-height:1.6; }
+    button { background:#2563EB; color:white; border:none; padding:14px 32px; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; width:100%; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📶</div>
+    <h1>You're offline</h1>
+    <p>Check your internet connection and try again. Your recent orders are still available.</p>
+    <button onclick="window.location.reload()">Try Again</button>
+  </div>
+</body>
+</html>

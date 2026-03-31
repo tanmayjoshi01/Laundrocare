@@ -43,7 +43,7 @@ export default function DashboardPage() {
           <button
             key={a.label}
             onClick={() => navigate(a.path)}
-            className="relative rounded-[16px] p-8 flex flex-col items-center justify-center gap-4 min-h-[180px] transition-transform hover:scale-[1.02] cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)]"
+            className="relative rounded-[16px] p-8 flex flex-col items-center justify-center gap-4 min-h-[160px] sm:min-h-[180px] transition-transform hover:scale-[1.02] cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)]"
             style={{ backgroundColor: a.bg, color: a.text, border: a.accent ? `2px solid ${a.accent}` : 'none' }}
           >
             {a.badge !== undefined && a.badge > 0 && (

@@ -193,28 +193,30 @@ export default function BillingPage() {
         </div>
 
         {/* Items table */}
-        <table className="w-full mb-6">
-          <thead>
-            <tr className="border-b-2 border-[#E2E8F0]">
-              <th className="text-left py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Item</th>
-              <th className="text-left py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Service</th>
-              <th className="text-center py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Qty</th>
-              <th className="text-right py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Unit</th>
-              <th className="text-right py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentOrderItems.map(i => (
-              <tr key={i.id} className="border-b border-[#F1F5F9]">
-                <td className="py-3 font-['DM_Sans'] text-[15px] text-[#0F172A]">{i.item}</td>
-                <td className="py-3 font-['DM_Sans'] text-[14px] text-[#64748B]">{SERVICE_LABELS[i.service] || i.service}</td>
-                <td className="py-3 text-center font-['JetBrains_Mono'] text-[15px]">{i.qty}</td>
-                <td className="py-3 text-right font-['JetBrains_Mono'] text-[15px]">₹{i.unitPrice}</td>
-                <td className="py-3 text-right font-['JetBrains_Mono'] text-[15px]">₹{i.unitPrice * i.qty}</td>
+        <div className="overflow-x-auto -mx-2 px-2">
+          <table className="w-full mb-6 min-w-[500px]">
+            <thead>
+              <tr className="border-b-2 border-[#E2E8F0]">
+                <th className="text-left py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Item</th>
+                <th className="text-left py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Service</th>
+                <th className="text-center py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Qty</th>
+                <th className="text-right py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Unit</th>
+                <th className="text-right py-2 font-['DM_Sans'] text-[14px] text-[#64748B]">Amount</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {currentOrderItems.map(i => (
+                <tr key={i.id} className="border-b border-[#F1F5F9]">
+                  <td className="py-3 font-['DM_Sans'] text-[15px] text-[#0F172A]">{i.item}</td>
+                  <td className="py-3 font-['DM_Sans'] text-[14px] text-[#64748B]">{SERVICE_LABELS[i.service] || i.service}</td>
+                  <td className="py-3 text-center font-['JetBrains_Mono'] text-[15px]">{i.qty}</td>
+                  <td className="py-3 text-right font-['JetBrains_Mono'] text-[15px]">₹{i.unitPrice}</td>
+                  <td className="py-3 text-right font-['JetBrains_Mono'] text-[15px]">₹{i.unitPrice * i.qty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Totals */}
         <div className="space-y-3 mb-6">
