@@ -1,12 +1,33 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useStore } from '../store';
 import { Plus, Package, Users, BarChart3, Settings } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 export default function DashboardPage() {
-  const { orders } = useStore();
+  const { orders, showToast } = useStore();
   const navigate = useNavigate();
+  const [sendingReport, setSendingReport] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
 
   const pending = orders.filter(o => o.status === 'pending').length;
+
+  const sendReportNow = async () => {
+    setSendingReport(true);
+    setReportSent(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-daily-report');
+      if (error) throw error;
+      setReportSent(true);
+      if (showToast) showToast('📊 Daily report sent to your email!');
+      setTimeout(() => setReportSent(false), 5000);
+    } catch (err) {
+      console.error('Report error:', err);
+      if (showToast) showToast('⚠️ Could not send report. Try again.');
+    } finally {
+      setSendingReport(false);
+    }
+  };
 
   const actions = [
     { icon: <Plus size={40} />, label: 'New Order', bg: '#2563EB', text: 'white', path: '/create-order' },
@@ -43,6 +64,33 @@ export default function DashboardPage() {
         <button onClick={() => navigate('/settings')} className="rounded-[12px] bg-white border border-[#E2E8F0] p-5 flex items-center gap-3 hover:bg-[#F8FAFC] transition-colors cursor-pointer">
           <Settings size={24} className="text-[#64748B]" />
           <span className="font-['DM_Sans'] text-[15px] text-[#0F172A]">Settings</span>
+        </button>
+      </div>
+      {/* Daily Report Section */}
+      <div className="mt-6 bg-white rounded-[12px] border border-[#E2E8F0] p-5 max-w-md mx-auto">
+        <h3 className="font-['Plus_Jakarta_Sans'] text-[16px] text-[#0F172A] mb-1" style={{ fontWeight: 700 }}>
+          📊 Daily Report
+        </h3>
+        <p className="font-['DM_Sans'] text-[13px] text-[#64748B] mb-4">
+          Auto-sends to your email every night at 9 PM.
+          Tap below to send now.
+        </p>
+        <button
+          onClick={sendReportNow}
+          disabled={sendingReport}
+          className={`w-full h-[52px] rounded-[10px] font-['DM_Sans'] text-[15px] flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 ${
+            reportSent
+              ? 'bg-[#DCFCE7] text-[#166534] border border-[#BBF7D0]'
+              : 'bg-[#2563EB] text-white hover:bg-[#1d4ed8]'
+          }`}
+          style={{ fontWeight: 600 }}
+        >
+          {sendingReport
+            ? '⏳ Sending...'
+            : reportSent
+            ? '✅ Report sent to your email!'
+            : '📧 Send Report Now'
+          }
         </button>
       </div>
     </div>
