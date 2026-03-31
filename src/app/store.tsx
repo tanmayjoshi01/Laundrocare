@@ -101,16 +101,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setIsLoggedIn(true);
+      if (data.session) {
+        setIsLoggedIn(true);
+      } else {
+        setLoading(false);
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session);
+      if (!session) {
+        setLoading(false);
+      }
     });
     return () => listener.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!isLoggedIn) { setLoading(false); return; }
+    if (!isLoggedIn) return;
     loadAllData();
   }, [isLoggedIn]);
 
