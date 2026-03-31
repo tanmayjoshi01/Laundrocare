@@ -3,8 +3,8 @@ import { Button } from '../components/ui';
 import logoImg from '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
 import { Phone, MapPin, Clock, ChevronRight } from 'lucide-react';
 
-const heroImg = '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
-<img src={heroImg} alt="Laundry Service" />
+import heroImg from '../../assets/29314f96b0646ef99b94a47ff8eedab177634f16.png';
+
 
 const PRICING_DATA = [
   { item: 'Shirt', wash: 10, iron: 8, dryclean: 40 },
