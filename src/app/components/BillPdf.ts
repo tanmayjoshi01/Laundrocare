@@ -1,4 +1,5 @@
 import { Order, LaundryService, CustomerCategory } from '../store';
+import { supabase } from '../../lib/supabase';
 import jsPDF from 'jspdf';
 
 export async function generateBillPdf(
@@ -89,7 +90,7 @@ export async function generateBillPdf(
     doc.setTextColor(15, 23, 42);
     doc.setFont('courier', 'normal');
     doc.text(String(item.qty), 53, y);
-    doc.text(`₹${item.unitPrice * item.qty}`, w - 5, y, { align: 'right' });
+    doc.text(`Rs. ${item.unitPrice * item.qty}`, w - 5, y, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(15, 23, 42);
     y += 4;
@@ -106,7 +107,7 @@ export async function generateBillPdf(
   doc.text(`Subtotal (${totalPcs} pcs)`, 5, y);
   doc.setFont('courier', 'normal');
   doc.setTextColor(15, 23, 42);
-  doc.text(`₹${order.subtotal}`, w - 5, y, { align: 'right' });
+  doc.text(`Rs. ${order.subtotal}`, w - 5, y, { align: 'right' });
   y += 4;
 
   if (order.discount > 0) {
@@ -118,7 +119,7 @@ export async function generateBillPdf(
     doc.text(discLabel, 5, y);
     doc.setFont('courier', 'normal');
     doc.setTextColor(220, 38, 38);
-    doc.text(`-₹${order.discount}`, w - 5, y, { align: 'right' });
+    doc.text(`-Rs. ${order.discount}`, w - 5, y, { align: 'right' });
     y += 4;
   }
 
@@ -135,7 +136,7 @@ export async function generateBillPdf(
   doc.setFont('courier', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(22, 163, 74);
-  doc.text(`₹${order.total}`, w - 5, y, { align: 'right' });
+  doc.text(`Rs. ${order.total}`, w - 5, y, { align: 'right' });
   y += 6;
 
   // Payment status
@@ -146,7 +147,7 @@ export async function generateBillPdf(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(22, 101, 52);
-    const paidText = `✅ PAID${order.paymentMethod ? ` via ${order.paymentMethod === 'upi' ? 'UPI' : order.paymentMethod === 'online' ? 'Online' : 'Cash'}` : ''}`;
+    const paidText = `[ PAID ]${order.paymentMethod ? ` via ${order.paymentMethod === 'upi' ? 'UPI' : order.paymentMethod === 'online' ? 'Online' : 'Cash'}` : ''}`;
     doc.text(paidText, w / 2, y + 2.5, { align: 'center' });
   } else {
     doc.setFillColor(254, 242, 242);
@@ -154,7 +155,7 @@ export async function generateBillPdf(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(153, 27, 27);
-    doc.text('⏳ UNPAID', w / 2, y + 2.5, { align: 'center' });
+    doc.text('[ UNPAID ]', w / 2, y + 2.5, { align: 'center' });
   }
   y += 10;
 
@@ -165,7 +166,7 @@ export async function generateBillPdf(
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(37, 99, 235);
-    doc.text('💳 Pay Online:', w / 2, y + 1.5, { align: 'center' });
+    doc.text('Pay Online:', w / 2, y + 1.5, { align: 'center' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(37, 99, 235);
@@ -199,4 +200,40 @@ export async function downloadBillPdf(
 ) {
   const doc = await generateBillPdf(order, services, category);
   doc.save(`LaundroCare-Bill-${order.id}.pdf`);
+}
+
+export async function uploadBillPdf(
+  order: Order,
+  services: LaundryService[],
+  category?: CustomerCategory
+): Promise<string | null> {
+  try {
+    const doc = await generateBillPdf(order, services, category);
+    const pdfBlob = doc.output('blob');
+    
+    // Upload to bills bucket
+    const fileName = `bill_${order.id}_${Date.now()}.pdf`;
+    const { data, error } = await supabase.storage
+      .from('bills')
+      .upload(fileName, pdfBlob, {
+        contentType: 'application/pdf',
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading bill PDF:', error);
+      return null;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('bills')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  } catch (err) {
+    console.error('Failed to upload PDF:', err);
+    return null;
+  }
 }

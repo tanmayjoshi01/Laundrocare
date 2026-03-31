@@ -4,7 +4,9 @@ import { useStore, Order } from '../store';
 import { Button } from '../components/ui';
 import { Printer, Check, Download, ExternalLink } from 'lucide-react';
 import { getWhatsAppOrderCreatedUrl } from '../components/whatsapp-bill';
-import { downloadBillPdf } from '../components/BillPdf';
+import { downloadBillPdf, uploadBillPdf } from '../components/BillPdf';
+import { UpiQrCode } from '../components/UpiQrCode';
+import { Banknote, Smartphone, Globe } from 'lucide-react';
 
 export default function BillingPage() {
   const { currentOrderItems, setCurrentOrderItems, selectedCustomer, setSelectedCustomer, setOrders, nextOrderId, showToast, laundryServices, customerCategories, saveOrder, createPaymentLink, getCustomerCategory } = useStore();
@@ -13,6 +15,7 @@ export default function BillingPage() {
   const [discount, setDiscount] = useState(0);
   const [discountType, setDiscountType] = useState<'₹' | '%'>('₹');
   const [paid, setPaid] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'online' | ''>('');
   const [confirmed, setConfirmed] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [dueDate, setDueDate] = useState(() => {
@@ -51,14 +54,24 @@ export default function BillingPage() {
       total,
       status: 'pending',
       paid,
+      paymentMethod: paid ? paymentMethod : '' as const,
       createdAt: new Date().toLocaleDateString('en-CA'),
       dueDate,
     };
+
+    // Auto-upload the bill PDF so WhatsApp can use it
+    showToast('⏳ Generating bill PDF...');
+    const cat = selectedCustomer?.categoryId ? customerCategories.find(c => c.id === selectedCustomer.categoryId) : undefined;
+    const uploadedUrl = await uploadBillPdf(order, laundryServices, cat || undefined);
+    if (uploadedUrl) {
+      order.billUrl = uploadedUrl;
+    }
+
     await saveOrder(order);
     setOrders(prev => [order, ...prev]);
     setConfirmedOrder(order);
     setConfirmed(true);
-    showToast('✅ Order saved successfully!');
+    showToast('✅ Order confirmed and bill generated!');
 
     // Generate payment link if not paid
     if (!paid) {
@@ -77,7 +90,6 @@ export default function BillingPage() {
     }
 
     // Auto-open WhatsApp with order details
-    const cat = selectedCustomer?.categoryId ? customerCategories.find(c => c.id === selectedCustomer.categoryId) : undefined;
     const whatsappUrl = getWhatsAppOrderCreatedUrl(order, laundryServices, cat || undefined);
     setTimeout(() => {
       window.open(whatsappUrl, '_blank');
@@ -231,11 +243,35 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {/* Payment toggle */}
-        <div className="flex items-center gap-4 mb-8 p-4 rounded-[8px] bg-[#F8FAFC]">
-          <span className="font-['DM_Sans'] text-[15px] text-[#0F172A]">Payment:</span>
-          <button onClick={() => setPaid(false)} className={`h-[44px] px-5 rounded-[8px] font-['DM_Sans'] text-[14px] cursor-pointer transition-all ${!paid ? 'bg-[#DC2626] text-white' : 'bg-white border border-[#E2E8F0] text-[#64748B]'}`}>Unpaid</button>
-          <button onClick={() => setPaid(true)} className={`h-[44px] px-5 rounded-[8px] font-['DM_Sans'] text-[14px] cursor-pointer transition-all ${paid ? 'bg-[#16A34A] text-white' : 'bg-white border border-[#E2E8F0] text-[#64748B]'}`}>Paid</button>
+        {/* Payment toggle + method */}
+        <div className="mb-8 p-4 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0]">
+          <div className="flex items-center gap-4 mb-3">
+            <span className="font-['DM_Sans'] text-[15px] text-[#0F172A]">Payment:</span>
+            <button onClick={() => { setPaid(false); setPaymentMethod(''); }} className={`h-[44px] px-5 rounded-[8px] font-['DM_Sans'] text-[14px] cursor-pointer transition-all ${!paid ? 'bg-[#DC2626] text-white' : 'bg-white border border-[#E2E8F0] text-[#64748B]'}`}>Unpaid</button>
+            <button onClick={() => setPaid(true)} className={`h-[44px] px-5 rounded-[8px] font-['DM_Sans'] text-[14px] cursor-pointer transition-all ${paid ? 'bg-[#16A34A] text-white' : 'bg-white border border-[#E2E8F0] text-[#64748B]'}`}>Paid</button>
+          </div>
+          {paid && (
+            <>
+              <span className="font-['DM_Sans'] text-[13px] text-[#64748B] mb-2 block">Payment Method:</span>
+              <div className="flex gap-2 mb-2">
+                <button onClick={() => setPaymentMethod('cash')} className={`flex-1 h-[52px] rounded-[8px] flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all border-2 ${paymentMethod === 'cash' ? 'border-[#16A34A] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#94A3B8]'}`}>
+                  <Banknote size={18} className={paymentMethod === 'cash' ? 'text-[#16A34A]' : 'text-[#64748B]'} />
+                  <span className={`font-['DM_Sans'] text-[12px] ${paymentMethod === 'cash' ? 'text-[#16A34A]' : 'text-[#64748B]'}`} style={{ fontWeight: 600 }}>Cash</span>
+                </button>
+                <button onClick={() => setPaymentMethod('upi')} className={`flex-1 h-[52px] rounded-[8px] flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all border-2 ${paymentMethod === 'upi' ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E2E8F0] bg-white hover:border-[#94A3B8]'}`}>
+                  <Smartphone size={18} className={paymentMethod === 'upi' ? 'text-[#2563EB]' : 'text-[#64748B]'} />
+                  <span className={`font-['DM_Sans'] text-[12px] ${paymentMethod === 'upi' ? 'text-[#2563EB]' : 'text-[#64748B]'}`} style={{ fontWeight: 600 }}>UPI</span>
+                </button>
+                <button onClick={() => setPaymentMethod('online')} className={`flex-1 h-[52px] rounded-[8px] flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all border-2 ${paymentMethod === 'online' ? 'border-[#7C3AED] bg-[#F5F3FF]' : 'border-[#E2E8F0] bg-white hover:border-[#94A3B8]'}`}>
+                  <Globe size={18} className={paymentMethod === 'online' ? 'text-[#7C3AED]' : 'text-[#64748B]'} />
+                  <span className={`font-['DM_Sans'] text-[12px] ${paymentMethod === 'online' ? 'text-[#7C3AED]' : 'text-[#64748B]'}`} style={{ fontWeight: 600 }}>Online</span>
+                </button>
+              </div>
+              {paymentMethod === 'upi' && orderId && (
+                <UpiQrCode amount={total} orderId={orderId} />
+              )}
+            </>
+          )}
         </div>
 
         {/* Actions */}
@@ -271,26 +307,6 @@ export default function BillingPage() {
                 </span>
               </div>
 
-              {/* Payment Link */}
-              {!paid && (
-                <div className="p-4 rounded-[10px] bg-[#EFF6FF] border border-[#BFDBFE]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-['DM_Sans'] text-[14px] text-[#2563EB]" style={{ fontWeight: 600 }}>💳 Payment Link</span>
-                    {generatingLink && <span className="font-['DM_Sans'] text-[12px] text-[#64748B]">Generating...</span>}
-                  </div>
-                  {paymentLink ? (
-                    <div className="flex items-center gap-2">
-                      <input readOnly value={paymentLink} className="flex-1 h-[40px] px-3 rounded-[6px] border border-[#BFDBFE] bg-white font-['JetBrains_Mono'] text-[12px] text-[#2563EB]" />
-                      <button onClick={() => { navigator.clipboard.writeText(paymentLink); showToast('📋 Link copied!'); }} className="h-[40px] px-4 rounded-[6px] bg-[#2563EB] text-white font-['DM_Sans'] text-[13px] cursor-pointer hover:bg-[#1d4ed8]">Copy</button>
-                      <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="h-[40px] w-[40px] rounded-[6px] border border-[#BFDBFE] flex items-center justify-center hover:bg-[#DBEAFE] cursor-pointer">
-                        <ExternalLink size={16} className="text-[#2563EB]" />
-                      </a>
-                    </div>
-                  ) : !generatingLink ? (
-                    <p className="font-['DM_Sans'] text-[12px] text-[#64748B]">Payment link will be available once Razorpay is configured. Share the bill via WhatsApp or PDF for now.</p>
-                  ) : null}
-                </div>
-              )}
 
               {/* PDF Download */}
               <button

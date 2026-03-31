@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { useStore } from '../store';
+import { useStore, Order } from '../store';
 import { Button, StatusBadge } from '../components/ui';
 import { ArrowLeft, Printer, Check, Banknote, Smartphone, Globe, Download } from 'lucide-react';
 import { getWhatsAppOrderCompletedUrl } from '../components/whatsapp-bill';
-import { downloadBillPdf } from '../components/BillPdf';
+import { downloadBillPdf, uploadBillPdf } from '../components/BillPdf';
+import { UpiQrCode } from '../components/UpiQrCode';
 
 export default function CheckoutPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -33,17 +34,25 @@ export default function CheckoutPage() {
   const totalPcs = order.items.reduce((s, i) => s + i.qty, 0);
 
   const handleComplete = async () => {
-    const updates = {
+    const updates: Partial<Order> = {
       status: 'completed' as const,
       paid,
       paymentMethod: paid ? paymentMethod : '' as const,
     };
+
+    showToast('⏳ Generating final bill PDF...');
+    const completedOrder = { ...order, ...updates };
+    const uploadedUrl = await uploadBillPdf(completedOrder, laundryServices, cat || undefined);
+    if (uploadedUrl) {
+      updates.billUrl = uploadedUrl;
+      completedOrder.billUrl = uploadedUrl;
+    }
+
     await updateOrder(orderId!, updates);
     setCompleted(true);
     showToast(`✅ Order #${orderId} completed${paid ? ' & paid' : ''}!`);
 
     // Auto-open WhatsApp with completion message
-    const completedOrder = { ...order, ...updates };
     const whatsappUrl = getWhatsAppOrderCompletedUrl(completedOrder, laundryServices, cat || undefined);
     setTimeout(() => {
       window.open(whatsappUrl, '_blank');
@@ -236,6 +245,12 @@ export default function CheckoutPage() {
                     <span className={`font-['DM_Sans'] text-[14px] ${paymentMethod === 'online' ? 'text-[#7C3AED]' : 'text-[#64748B]'}`} style={{ fontWeight: 600 }}>Online</span>
                   </button>
                 </div>
+                {/* UPI QR Code */}
+                {paymentMethod === 'upi' && (
+                  <div className="mt-4">
+                    <UpiQrCode amount={order.total} orderId={order.id} />
+                  </div>
+                )}
               </div>
             )}
 

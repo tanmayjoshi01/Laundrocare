@@ -1,69 +1,24 @@
-import { Order, LaundryService, CustomerCategory } from '../store';
+﻿import { Order, LaundryService, CustomerCategory, OrderItem } from '../store';
+import { generateUpiLink } from '../../lib/upi';
 
-export function generateBillMessage(
-  order: Order,
-  services: LaundryService[],
-  category?: CustomerCategory
-): string {
+const UPI_ID = import.meta.env.VITE_UPI_ID || 'yourshop@upi';
+const UPI_NAME = import.meta.env.VITE_UPI_NAME || 'LaundroCare';
+
+const NUMBER_EMOJIS = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+
+function getNumberEmoji(num: number): string {
+  if (num <= 10) return NUMBER_EMOJIS[num];
+  return `${num}.`;
+}
+
+export function generateItemsList(items: OrderItem[], services: LaundryService[]): string {
   const serviceLabels: Record<string, string> = Object.fromEntries(services.map(s => [s.key, s.label]));
-  const totalPcs = order.items.reduce((s, i) => s + i.qty, 0);
-
-  const itemLines = order.items.map((i, idx) =>
-    `${idx + 1}. ${i.item} — ${serviceLabels[i.service] || i.service}\n   Qty: ${i.qty} × ₹${i.unitPrice} = ₹${i.unitPrice * i.qty}`
-  ).join('\n');
-
-  const lines = [
-    `━━━━━━━━━━━━━━━━━━`,
-    `   *LaundroCare*`,
-    `  Professional Laundry`,
-    `━━━━━━━━━━━━━━━━━━`,
-    ``,
-    `*Order #${order.id}*`,
-    `Customer: *${order.customerName}*`,
-    `Phone: ${order.customerPhone}`,
-    `Date: ${order.createdAt}`,
-    `Due: ${order.dueDate}`,
-    ``,
-    `━━ *Items & Services* ━━`,
-    ``,
-    itemLines,
-    ``,
-    `━━━━━━━━━━━━━━━━━━`,
-    `Items: ${totalPcs} pcs`,
-    `Subtotal: ₹${order.subtotal}`,
-  ];
-
-  if (order.discount > 0) {
-    const discountLabel = category && category.discount > 0
-      ? `Discount (${category.name} ${category.discount}%)`
-      : `Discount`;
-    lines.push(`${discountLabel}: -₹${order.discount}`);
-  }
-
-  lines.push(
-    `━━━━━━━━━━━━━━━━━━`,
-    `*TOTAL: ₹${order.total}*`,
-    `━━━━━━━━━━━━━━━━━━`,
-    ``,
-    `Status: ${order.status === 'completed' ? '✅ Completed' : '⏳ Pending'}`,
-    `Payment: ${order.paid ? `✅ Paid${order.paymentMethod ? ` via ${order.paymentMethod === 'upi' ? 'UPI' : order.paymentMethod === 'online' ? 'Online' : 'Cash'}` : ''}` : '⏳ Pending'}`,
-  );
-
-  // Add payment link if available and not yet paid
-  if (order.paymentLink && !order.paid) {
-    lines.push(
-      ``,
-      `💳 *Pay Online:*`,
-      order.paymentLink,
-    );
-  }
-
-  lines.push(
-    ``,
-    `Thank you for choosing LaundroCare!`,
-  );
-
-  return lines.join('\n');
+  
+  return items.map((i, idx) => {
+    const emoji = getNumberEmoji(idx + 1);
+    const serviceName = serviceLabels[i.service] || i.service;
+    return `${emoji} ${i.item} — ${serviceName} × ${i.qty} = ₹${i.unitPrice * i.qty}`;
+  }).join('\n');
 }
 
 export function generateOrderCreatedMessage(
@@ -71,64 +26,176 @@ export function generateOrderCreatedMessage(
   services: LaundryService[],
   category?: CustomerCategory
 ): string {
-  const bill = generateBillMessage(order, services, category);
-  return `🧺 *New Order Registered!*\n\n${bill}`;
+  const itemsList = generateItemsList(order.items, services);
+  
+  let paymentSection = '';
+  if (!order.paid) {
+    const upiLink = generateUpiLink({
+      upiId: UPI_ID,
+      name: UPI_NAME,
+      amount: order.total,
+      orderId: order.id,
+    });
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiLink)}`;
+    paymentSection = `
+💳 *Pay online to confirm:*
+UPI ID: ${UPI_ID}
+
+🔗 *Click to view QR Code:*
+${qrCodeUrl}
+
+━━━━━━━━━━━━━━━━━━
+`;
+  }
+
+  let billSection = '';
+  if (order.billUrl) {
+    billSection = `
+📄 *Download PDF Bill:*
+${order.billUrl}
+
+━━━━━━━━━━━━━━━━━━
+`;
+  }
+
+  return `🧺 *LaundroCare*
+━━━━━━━━━━━━━━━━━━
+✨ *Order Confirmed!*
+━━━━━━━━━━━━━━━━━━
+
+📦 *Order ID:* #${order.id}
+👤 *Customer:* ${order.customerName}
+📞 *Phone:* ${order.customerPhone}
+
+📅 *Date:* ${order.createdAt}
+⏳ *Due Date:* ${order.dueDate}
+
+━━━━━━━━━━━━━━━━━━
+🧾 *Items Summary*
+━━━━━━━━━━━━━━━━━━
+
+${itemsList}
+
+━━━━━━━━━━━━━━━━━━
+💵 *Total Amount:* ₹${order.total}
+📌 *Status:* Order Received
+
+━━━━━━━━━━━━━━━━━━
+${paymentSection}${billSection}📲 We’ll notify you once your order is ready.
+
+🙏 Thank you for choosing *LaundroCare*!`;
 }
 
 export function generateOrderCompletedMessage(
   order: Order,
   services: LaundryService[],
-  category?: CustomerCategory
+  category?: CustomerCategory,
+  method?: string
 ): string {
-  const serviceLabels: Record<string, string> = Object.fromEntries(services.map(s => [s.key, s.label]));
-  const totalPcs = order.items.reduce((s, i) => s + i.qty, 0);
+  const itemsList = order.items.map((item, i) => {
+    const total = item.qty * item.unitPrice
+    const emoji = getNumberEmoji(i + 1)
+    return `${emoji} ${item.item} — ${item.service}
+   Qty: ${item.qty} × ₹${item.unitPrice} = ₹${total}`
+  }).join('\n\n')
 
-  const itemLines = order.items.map((i, idx) =>
-    `${idx + 1}. ${i.item} — ${serviceLabels[i.service] || i.service} (×${i.qty})`
-  ).join('\n');
+  const totalItems = order.items.reduce((sum, item) => sum + item.qty, 0)
+  const paymentMethodStr = method || order.paymentMethod || 'Cash';
 
-  const lines = [
-    `🧺 *Order Completed!* ✅`,
-    ``,
-    `━━━━━━━━━━━━━━━━━━`,
-    `   *LaundroCare*`,
-    `━━━━━━━━━━━━━━━━━━`,
-    ``,
-    `Hi *${order.customerName}*,`,
-    `Your order *#${order.id}* is now *COMPLETED*! 🎉`,
-    ``,
-    `*Items (${totalPcs} pcs):*`,
-    itemLines,
-    ``,
-    `*Total: ₹${order.total}*`,
-  ];
+  let billSection = '';
+  if (order.billUrl) {
+    billSection = `
+📄 *Download Final PDF Bill:*
+${order.billUrl}
 
-  if (order.discount > 0) {
-    const discountLabel = category && category.discount > 0
-      ? `(${category.name} ${category.discount}% discount applied)`
-      : `(Discount applied)`;
-    lines.push(discountLabel);
+━━━━━━━━━━━━━━━━━━
+`;
   }
 
-  lines.push(
-    ``,
-    `Payment: ${order.paid ? `✅ Paid${order.paymentMethod ? ` via ${order.paymentMethod === 'upi' ? 'UPI' : order.paymentMethod === 'online' ? 'Online' : 'Cash'}` : ''}` : '⏳ Pending'}`,
-  );
+  return `🧺 *LaundroCare*
+━━━━━━━━━━━━━━━━━━
+🎉 *Order Completed Successfully!*
+━━━━━━━━━━━━━━━━━━
 
-  if (order.paymentLink && !order.paid) {
-    lines.push(
-      ``,
-      `💳 *Pay Online:*`,
-      order.paymentLink,
-    );
-  }
+📦 *Order ID:* #${order.id}
+👤 *Customer:* ${order.customerName}
 
-  lines.push(
-    ``,
-    `Thank you for choosing LaundroCare! 🙏`,
-  );
+━━━━━━━━━━━━━━━━━━
+🧾 *Clothes Delivered*
+━━━━━━━━━━━━━━━━━━
 
-  return lines.join('\n');
+${itemsList}
+
+━━━━━━━━━━━━━━━━━━
+📊 *Summary*
+━━━━━━━━━━━━━━━━━━
+
+🧺 Total Items: ${totalItems} pcs  
+💵 *Total Amount:* ₹${order.total}  
+💳 *Payment:* Paid via ${paymentMethodStr === 'upi' || paymentMethodStr === 'UPI' ? 'UPI' : 'Cash'}  
+
+━━━━━━━━━━━━━━━━━━
+${billSection}✅ No payment pending.
+
+📌 Please check your items at the time of delivery.
+
+━━━━━━━━━━━━━━━━━━
+🙏 Thank you for choosing *LaundroCare*!`
+}
+
+export function generateReceiptMessage(
+  order: Order,
+  services: LaundryService[],
+  category?: CustomerCategory,
+  paymentMethod?: string,
+  billLink?: string
+): string {
+  const method = paymentMethod || order.paymentMethod || 'Cash';
+  const linkString = billLink || order.paymentLink || 'Shop internally generated receipt';
+  
+  return `🧺 *LaundroCare*
+━━━━━━━━━━━━━━━━━━
+🧾 *Payment Receipt*
+━━━━━━━━━━━━━━━━━━
+
+📦 *Order ID:* #${order.id}
+👤 *Customer:* ${order.customerName}
+
+━━━━━━━━━━━━━━━━━━
+💰 *Total Paid:* ₹${order.total}
+💳 *Payment Method:* ${method}
+
+📅 *Date:* ${new Date().toLocaleDateString('en-IN')}
+
+━━━━━━━━━━━━━━━━━━
+📄 View full bill:
+${linkString}
+
+━━━━━━━━━━━━━━━━━━
+🙏 Thank you for trusting *LaundroCare*!`;
+}
+
+export function generatePaymentCollectedMessage(
+  order: Order,
+  method: 'cash' | 'upi'
+): string {
+  const now = new Date().toLocaleString('en-IN');
+  return `🧺 *LaundroCare*
+━━━━━━━━━━━━━━━━━━
+💰 *Payment Collected*
+━━━━━━━━━━━━━━━━━━
+
+📦 *Order ID:* #${order.id}
+👤 *Customer:* ${order.customerName}
+📞 *Phone:* ${order.customerPhone}
+
+💵 *Amount:* ₹${order.total}
+💳 *Method:* ${method === 'upi' ? 'UPI' : 'Cash'}
+
+🕒 *Time:* ${now}
+
+━━━━━━━━━━━━━━━━━━
+✅ Payment successfully received.`;
 }
 
 export function generateDailySummaryMessage(
@@ -136,29 +203,33 @@ export function generateDailySummaryMessage(
   stats: {
     todayOrders: number; todayEarnings: number;
     paidAmount: number; unpaidAmount: number;
+    upiTotal: number; cashTotal: number;
     pending: number; completed: number;
   }
 ): string {
-  return [
-    `📊 *LaundroCare — Daily Report*`,
-    `━━━━━━━━━━━━━━━━━━`,
-    `Date: *${date}*`,
-    ``,
-    `📦 Total Orders: *${stats.todayOrders}*`,
-    `🟢 Completed: ${stats.completed}`,
-    `🟡 Pending: ${stats.pending}`,
-    ``,
-    `💰 *Total Earnings: ₹${stats.todayEarnings.toLocaleString()}*`,
-    `✅ Collected: ₹${stats.paidAmount.toLocaleString()}`,
-    `⏳ Pending Dues: ₹${stats.unpaidAmount.toLocaleString()}`,
-    ``,
-    `━━━━━━━━━━━━━━━━━━`,
-    `Have a great evening! 🌙`,
-  ].join('\n');
+  return `🧺 *LaundroCare*
+━━━━━━━━━━━━━━━━━━
+📊 *Daily Summary*
+━━━━━━━━━━━━━━━━━━
+
+📅 *Date:* ${date}
+
+📦 Orders Completed: ${stats.completed}
+💰 Total Revenue: ₹${stats.todayEarnings}
+
+💳 UPI Payments: ₹${stats.upiTotal}
+💵 Cash Payments: ₹${stats.cashTotal}
+
+━━━━━━━━━━━━━━━━━━
+📌 Pending Payments: ${stats.unpaidAmount}
+
+━━━━━━━━━━━━━━━━━━
+🚀 Keep up the great work!`;
 }
 
 export function getWhatsAppBillUrl(order: Order, services: LaundryService[], category?: CustomerCategory): string {
-  const msg = generateBillMessage(order, services, category);
+  const method = order.paymentMethod === 'upi' ? 'UPI' : order.paymentMethod === 'online' ? 'Online' : 'Cash';
+  const msg = generateReceiptMessage(order, services, category, method);
   return `https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -176,3 +247,9 @@ export function getWhatsAppDailySummaryUrl(ownerPhone: string, date: string, sta
   const msg = generateDailySummaryMessage(date, stats);
   return `https://wa.me/91${ownerPhone}?text=${encodeURIComponent(msg)}`;
 }
+
+export function getWhatsAppPaymentCollectedUrl(ownerPhone: string, order: Order, method: 'cash' | 'upi'): string {
+  const msg = generatePaymentCollectedMessage(order, method);
+  return `https://wa.me/91${ownerPhone}?text=${encodeURIComponent(msg)}`;
+}
+

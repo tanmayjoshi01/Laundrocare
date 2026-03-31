@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore, Order } from '../store';
 import { Button, StatusBadge, WhatsAppButton } from '../components/ui';
-import { Search, Calendar, Link2, Copy } from 'lucide-react';
+import { Search, Link2, Truck } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { OrderBillModal } from '../components/OrderBillModal';
 import { getWhatsAppBillUrl } from '../components/whatsapp-bill';
@@ -170,6 +170,11 @@ export default function OrdersPage() {
                       )}
                       {!o.paid && (
                         <Button variant="secondary" size="sm" onClick={() => markPaid(o.id)}>💳 Mark Paid</Button>
+                      )}
+                      {!o.paid && (
+                        <Button variant="success" size="sm" onClick={() => navigate(`/delivery/${o.id}`)}>
+                          <Truck size={14} /> Collect
+                        </Button>
                       )}
                       {o.paymentLink && !o.paid && (
                         <button
